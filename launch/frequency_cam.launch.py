@@ -38,8 +38,8 @@ def launch_setup(context, *args, **kwargs):
         name='frequency_cam',
         parameters=[
             {'use_sim_time': LaunchConfig('use_sim_time'),
-             'min_frequency': 10.0,
-             'max_frequency': 5000.0,
+             'min_frequency': 500.0,
+             'max_frequency': 1000.0,
              'cutoff_period': 5.0,  # prefilter cutoff period #events
              'debug_x': 240,
              'debug_y': 194,

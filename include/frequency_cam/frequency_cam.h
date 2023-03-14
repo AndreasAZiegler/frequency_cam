@@ -234,8 +234,8 @@ private:
     // const int max_range_1 = 3200;
     // const int min_range_2 = 3800;
     // const int max_range_2 = 4200;
-    const int min_range_2 = 1500;
-    const int max_range_2 = 2500;
+    const int min_range_2 = 500;
+    const int max_range_2 = 1000;
     cv::Mat rawImg(height_, width_, CV_32FC1, 0.0);
     const double maxDt = 1.0 / freq_[0] * timeoutCycles_;
     const double minFreq = T::tf(freq_[0]);
@@ -360,7 +360,7 @@ private:
           rawImg,
           {std::get<0>(filtered_frequency_points.at(i)),
            std::get<1>(filtered_frequency_points.at(i))},
-          2, CV_RGB(4500, 4500, 4500), 4);
+          2, CV_RGB(550, 550, 550), 4);
       }
 
       nrDetectedWands_++;
