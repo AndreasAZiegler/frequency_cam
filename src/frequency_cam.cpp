@@ -129,19 +129,7 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
 
     std::vector<uint64_t>::iterator it = eventTimesNs_.end();
     std::vector<uint64_t>::iterator iterator_to_remove = externalTriggers_.end();
-    if (hasValidTime_) {
-      // Get the smallest difference
-      auto it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = sensor_time_] (uint64_t a, uint64_t b) {
-            uint64_t diff_a =  (a > value) ? a - value : value - a;
-            uint64_t diff_b = (value > b) ? value - b : b - value;
-            return diff_a < diff_b;
-      });
-      if (it != eventTimesNs_.end()) {
-        difference = (*it > sensor_time_) ? *it - sensor_time_ : sensor_time_ - *it;
-        trigger_time = sensor_time_;
-        event_time = *it;
-      }
-    } else {
+    if (!externalTriggers_.empty()) {
       uint64_t min_difference = 1e6;
       // for (const auto& trigger_time_i : externalTriggers_) {
       for (auto trigger_it = externalTriggers_.begin(); trigger_it != externalTriggers_.end(); trigger_it++) {
@@ -165,7 +153,20 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
         }
       }
       difference = min_difference;
-    }
+    } else {
+    // if (hasValidTime_) {
+      // Get the smallest difference
+      auto it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = sensor_time_] (uint64_t a, uint64_t b) {
+            uint64_t diff_a =  (a > value) ? a - value : value - a;
+            uint64_t diff_b = (value > b) ? value - b : b - value;
+            return diff_a < diff_b;
+      });
+      if (it != eventTimesNs_.end()) {
+        difference = (*it > sensor_time_) ? *it - sensor_time_ : sensor_time_ - *it;
+        trigger_time = sensor_time_;
+        event_time = *it;
+      }
+    } 
     eventTimesNs_.clear();
 
     if (difference < 500 * 1e3) {
