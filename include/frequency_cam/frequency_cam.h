@@ -349,22 +349,27 @@ private:
       // std::cout << "Filtered points:" << std::endl;
       // std::cout << "time stamp: " << lastEventTime_ << std::endl;
       //for (const auto & filtered_point : filtered_points) {
+      csv_file_ << trigger_timestamp;
       for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
         // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
         //           << ", y: " << std::get<1>(filtered_frequency_points.at(i))
         //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
         //           << ", number of points: " << number_of_points.at(i) << std::endl;
-        csv_file_ << trigger_timestamp << "," << std::get<0>(filtered_frequency_points.at(i)) << ","
-                  << std::get<1>(filtered_frequency_points.at(i)) << ","
-                  << std::get<2>(filtered_frequency_points.at(i)) << "\n";
+        // auto frequency = std::get<0>(filtered_frequency_points.at(i));
+        csv_file_ << "," << std::get<1>(filtered_frequency_points.at(i)) << ","
+                  << std::get<2>(filtered_frequency_points.at(i));
         cv::circle(
           rawImg,
           {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
            static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
           2, CV_RGB(550, 550, 550), 4);
       }
+      csv_file_ << "\n";
 
       nrDetectedWands_++;
+    } else {
+      csv_file_ << trigger_timestamp;
+      csv_file_ << "," << -1 << "," << -1  << "," << -1 << "," << -1 << "," << -1 << "," << -1 << "\n";
     }
 
     return (rawImg);
