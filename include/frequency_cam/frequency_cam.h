@@ -367,6 +367,24 @@ private:
     if (filtered_frequency_points.size() == 3) {
       sort3Kp(filtered_frequency_points);
 
+      // Check if points are on a line (are collinear)
+      // double residual = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
+      // double term_1 = std::get<0>(filtered_frequency_points.at(0)) * (std::get<1>(filtered_frequency_points.at(1)) - std::get<1>(filtered_frequency_points.at(2)));
+      // double term_2 = std::get<0>(filtered_frequency_points.at(1)) * (std::get<1>(filtered_frequency_points.at(2)) - std::get<1>(filtered_frequency_points.at(0)));
+      // double term_3 = std::get<0>(filtered_frequency_points.at(2)) * (std::get<1>(filtered_frequency_points.at(0)) - std::get<1>(filtered_frequency_points.at(1)));
+      double residual = std::get<0>(filtered_frequency_points.at(0)) * (std::get<1>(filtered_frequency_points.at(1)) - std::get<1>(filtered_frequency_points.at(2)))
+                        + std::get<0>(filtered_frequency_points.at(1)) * (std::get<1>(filtered_frequency_points.at(2)) - std::get<1>(filtered_frequency_points.at(0)))
+                        + std::get<0>(filtered_frequency_points.at(2)) * (std::get<1>(filtered_frequency_points.at(0)) - std::get<1>(filtered_frequency_points.at(1)));
+      // std::cout << "x1: " << std::get<0>(filtered_frequency_points.at(0)) << std::endl;
+      // std::cout << "y1 : " << std::get<1>(filtered_frequency_points.at(0)) << std::endl;
+      // std::cout << "x2: " << std::get<0>(filtered_frequency_points.at(1)) << std::endl;
+      // std::cout << "y2 : " << std::get<1>(filtered_frequency_points.at(1)) << std::endl;
+      // std::cout << "x3: " << std::get<0>(filtered_frequency_points.at(2)) << std::endl;
+      // std::cout << "y3 : " << std::get<1>(filtered_frequency_points.at(2)) << std::endl;
+      // std::cout << "term 1: " << term_1 << ", term 2: " << term_2 << ", term_3: " << term_3 << std::endl;
+      // std::cout << "residual: " << std::fabs(residual) << std::endl;
+
+
       // Eigen::Matrix3f matrix;
       // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
       //           std::get<0>(filtered_frequency_points.at(1)), std::get<1>(filtered_frequency_points.at(1)), 1.0,
