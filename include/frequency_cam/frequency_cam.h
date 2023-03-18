@@ -323,6 +323,22 @@ private:
           auto mean_y = std::reduce(y_values.begin(), y_values.end());
           mean_y /= y_values.size();
 
+          // Centroid via Moments
+          // double m00 = 0.0;
+          // double m10 = 0.0;
+          // double m01 = 0.0;
+          // for (std::size_t x_i = 0; x_i < x_values.size(); ++x_i) {
+          //   for (std::size_t y_i = 0; y_i < y_values.size(); ++y_i) {
+          //      m00 += 1.0; 
+          //      m10 += x_values.at(x_i); 
+          //      m01 += y_values.at(y_i); 
+          //   }
+          // }
+          // std::cout << "Mean x: " << mean_x << ", y: " << mean_y << std::endl;
+          // mean_x = m10 / m00;
+          // mean_y = m01 / m00;
+          // std::cout << "Centroid x: " << mean_x << ", y: " << mean_y << std::endl;
+
           bool insert = true;
           for (const auto & point : filtered_frequency_points) {
             x = std::get<0>(point);
