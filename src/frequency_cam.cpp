@@ -21,6 +21,16 @@
 #include <iomanip>
 #include <iostream>
 
+template <typename T, typename A> int arg_max(std::vector<T, A> const &vec) {
+  return static_cast<int>(
+      std::distance(vec.begin(), max_element(vec.begin(), vec.end())));
+}
+
+template <typename T, typename A> int arg_min(std::vector<T, A> const &vec) {
+  return static_cast<int>(
+      std::distance(vec.begin(), min_element(vec.begin(), vec.end())));
+}
+
 namespace frequency_cam
 {
 
@@ -207,6 +217,58 @@ void FrequencyCam::setTriggers(const std::string & triggers_file) {
   //   std::cout << "Trigger time stamp: " << element << std::endl;
   // }
 
+}
+
+// void FrequencyCam::sort3Kp(vector<cv::KeyPoint> &kp) {
+void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp) {
+  // Sorts from closest together to most seperated
+  // vector<cv::KeyPoint> cp_kp;
+  std::vector<std::tuple<double, double, double>> cp_kp;
+  cp_kp = kp;
+  std::vector<double> d;
+  for (std::size_t i = 0; i < 2; i++) {
+    for (std::size_t j = i + 1; j < 3; j++) {
+      // cv::Point2f diff = kp.at(i).pt - kp.at(j).pt;
+      cv::Point2d diff {std::get<1>(kp.at(i)) - std::get<1>(kp.at(j)), std::get<2>(kp.at(i)) - std::get<2>(kp.at(j))};
+      double dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+      d.push_back(dist);
+    }
+  }
+
+  int idx_min = arg_min(d);
+  int idx_max = arg_max(d);
+  switch (idx_max) {
+  case 0:
+    kp.at(1) = cp_kp.at(2);
+    if (idx_min == 1) {
+      kp.at(0) = cp_kp.at(1);
+      kp.at(2) = cp_kp.at(0);
+    } else {
+      kp.at(0) = cp_kp.at(0);
+      kp.at(2) = cp_kp.at(1);
+    }
+    break;
+  case 1:
+    kp.at(1) = cp_kp.at(1);
+    if (idx_min == 0) {
+      kp.at(0) = cp_kp.at(0);
+      kp.at(2) = cp_kp.at(2);
+    } else {
+      kp.at(0) = cp_kp.at(2);
+      kp.at(2) = cp_kp.at(0);
+    }
+    break;
+  case 2:
+    kp.at(1) = cp_kp.at(0);
+    if (idx_min == 0) {
+      kp.at(0) = cp_kp.at(2);
+      kp.at(2) = cp_kp.at(1);
+    } else {
+      kp.at(0) = cp_kp.at(1);
+      kp.at(2) = cp_kp.at(2);
+    }
+    break;
+  }
 }
 
 std::ostream & operator<<(std::ostream & os, const FrequencyCam::Event & e)

@@ -335,6 +335,7 @@ private:
 
     // if (!filtered_frequency_points.empty()) {
     if (filtered_frequency_points.size() == 3) {
+      sort3Kp(filtered_frequency_points);
 
       // Eigen::Matrix3f matrix;
       // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
@@ -373,6 +374,8 @@ private:
   {
     return (static_cast<uint32_t>((t / 1000) & 0xFFFFFFFF));
   }
+
+  void sort3Kp(std::vector<std::tuple<double, double, double>>& kp);
 
   // ------ variables ----
   State * state_{0};
