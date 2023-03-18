@@ -21,4 +21,4 @@ RUN cd /root/spinnaker-3.0.0.118-amd64 && \
 RUN apt-get install -y ros-galactic-camera-info-manager*
 
 # Install calibration dependencies
-RUN apt-get install -y libceres-dev libeigen3-dev
+RUN apt-get install -y libceres-dev libeigen3-dev gdb
