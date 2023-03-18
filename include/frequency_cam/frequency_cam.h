@@ -276,7 +276,10 @@ private:
     std::vector<std::size_t> number_of_points;
     for (const auto & frequency_point : frequency_points) {
       std::vector<std::size_t> assigned_indices;
+      // Going through all the points which are in the frequency range
+      // for the reference point
       for (std::size_t i = 0; i < frequency_point.second.size(); ++i) {
+        // Skip if the point was already assigned to a cluster
         if (std::count(assigned_indices.begin(), assigned_indices.end(), i)) {
           continue;
         }
@@ -288,13 +291,18 @@ private:
         auto y = std::get<1>(frequency_point.second.at(i));
 
         std::size_t counts = 0;
+        // Going through all the remaining points which are in the frequency range
+        // for the candidate points
         for (std::size_t j = i + 1; j < frequency_point.second.size(); ++j) {
+          // Skip if the point was already assigned to a cluster
           if (std::count(assigned_indices.begin(), assigned_indices.end(), j)) {
             continue;
           }
+
           auto x_candidate = std::get<0>(frequency_point.second.at(j));
           auto y_candidate = std::get<1>(frequency_point.second.at(j));
 
+          // Make sure that points in the same cluster are close
           if ((std::fabs(x - x_candidate) < 20) && (std::fabs(y - y_candidate) < 20)) {
             candidate_indices.emplace_back(j);
             x_values.emplace_back(x_candidate);
@@ -303,10 +311,13 @@ private:
           }
         }
 
+        // We want a certain amount of points for a cluster
         if (10 < counts) {
           candidate_indices.emplace_back(i);
           x_values.emplace_back(x);
           y_values.emplace_back(y);
+
+          // Calculate mean position of the cluster
           auto mean_x = std::reduce(x_values.begin(), x_values.end());
           mean_x /= x_values.size();
           auto mean_y = std::reduce(y_values.begin(), y_values.end());
@@ -317,6 +328,8 @@ private:
             x = std::get<0>(point);
             y = std::get<1>(point);
 
+            // Do not add cluster if its mean position is close to an already added
+            // cluster
             if ((std::fabs(x - mean_x) < 30) && (std::fabs(y - mean_y) < 30)) {
               insert = false;
               break;
