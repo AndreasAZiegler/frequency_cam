@@ -272,7 +272,7 @@ private:
       }
     }
 
-    std::vector<std::tuple<int, int, int>> filtered_frequency_points;
+    std::vector<std::tuple<double, double, double>> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
     for (const auto & frequency_point : frequency_points) {
       std::vector<std::size_t> assigned_indices;
@@ -358,8 +358,8 @@ private:
                   << std::get<2>(filtered_frequency_points.at(i)) << "\n";
         cv::circle(
           rawImg,
-          {std::get<0>(filtered_frequency_points.at(i)),
-           std::get<1>(filtered_frequency_points.at(i))},
+          {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
+           static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
           2, CV_RGB(550, 550, 550), 4);
       }
 
