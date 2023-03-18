@@ -372,9 +372,9 @@ private:
       // double term_1 = std::get<0>(filtered_frequency_points.at(0)) * (std::get<1>(filtered_frequency_points.at(1)) - std::get<1>(filtered_frequency_points.at(2)));
       // double term_2 = std::get<0>(filtered_frequency_points.at(1)) * (std::get<1>(filtered_frequency_points.at(2)) - std::get<1>(filtered_frequency_points.at(0)));
       // double term_3 = std::get<0>(filtered_frequency_points.at(2)) * (std::get<1>(filtered_frequency_points.at(0)) - std::get<1>(filtered_frequency_points.at(1)));
-      double residual = std::get<0>(filtered_frequency_points.at(0)) * (std::get<1>(filtered_frequency_points.at(1)) - std::get<1>(filtered_frequency_points.at(2)))
-                        + std::get<0>(filtered_frequency_points.at(1)) * (std::get<1>(filtered_frequency_points.at(2)) - std::get<1>(filtered_frequency_points.at(0)))
-                        + std::get<0>(filtered_frequency_points.at(2)) * (std::get<1>(filtered_frequency_points.at(0)) - std::get<1>(filtered_frequency_points.at(1)));
+      // double residual = std::get<0>(filtered_frequency_points.at(0)) * (std::get<1>(filtered_frequency_points.at(1)) - std::get<1>(filtered_frequency_points.at(2)))
+      //                   + std::get<0>(filtered_frequency_points.at(1)) * (std::get<1>(filtered_frequency_points.at(2)) - std::get<1>(filtered_frequency_points.at(0)))
+      //                   + std::get<0>(filtered_frequency_points.at(2)) * (std::get<1>(filtered_frequency_points.at(0)) - std::get<1>(filtered_frequency_points.at(1)));
       // std::cout << "x1: " << std::get<0>(filtered_frequency_points.at(0)) << std::endl;
       // std::cout << "y1 : " << std::get<1>(filtered_frequency_points.at(0)) << std::endl;
       // std::cout << "x2: " << std::get<0>(filtered_frequency_points.at(1)) << std::endl;
