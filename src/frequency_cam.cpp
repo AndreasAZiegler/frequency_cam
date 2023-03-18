@@ -206,7 +206,7 @@ void FrequencyCam::setTriggers(const std::string & triggers_file) {
   myfile.open(triggers_file);
 
   if(!myfile.is_open()) {
-    std::cerr << "Error open" << std::endl;
+    std::cerr << "Error opening trigger file" << std::endl;
   }
 
   while(getline(myfile, line)) {
