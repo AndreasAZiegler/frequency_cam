@@ -330,7 +330,8 @@ private:
 
             // Do not add cluster if its mean position is close to an already added
             // cluster
-            if ((std::fabs(x - mean_x) < 30) && (std::fabs(y - mean_y) < 30)) {
+            double cluster_distance = 20;
+            if ((std::fabs(x - mean_x) < cluster_distance) && (std::fabs(y - mean_y) < cluster_distance)) {
               insert = false;
               break;
             }
