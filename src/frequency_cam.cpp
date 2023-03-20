@@ -242,11 +242,11 @@ void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp) 
   case 0:
     kp.at(1) = cp_kp.at(2);
     if (idx_min == 1) {
-      kp.at(0) = cp_kp.at(1);
-      kp.at(2) = cp_kp.at(0);
-    } else {
       kp.at(0) = cp_kp.at(0);
       kp.at(2) = cp_kp.at(1);
+    } else {
+      kp.at(0) = cp_kp.at(1);
+      kp.at(2) = cp_kp.at(0);
     }
     break;
   case 1:
@@ -262,11 +262,11 @@ void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp) 
   case 2:
     kp.at(1) = cp_kp.at(0);
     if (idx_min == 0) {
-      kp.at(0) = cp_kp.at(2);
-      kp.at(2) = cp_kp.at(1);
-    } else {
       kp.at(0) = cp_kp.at(1);
       kp.at(2) = cp_kp.at(2);
+    } else {
+      kp.at(0) = cp_kp.at(2);
+      kp.at(2) = cp_kp.at(1);
     }
     break;
   }
