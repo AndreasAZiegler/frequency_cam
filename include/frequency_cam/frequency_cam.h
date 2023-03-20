@@ -256,7 +256,7 @@ private:
             if (
               // (frequency > min_range_1 && frequency < max_range_1) ||
               (frequency > min_range_2 && frequency < max_range_2)) {
-              frequency = roundUp(frequency, 500);
+              frequency = roundUp(frequency, 250);
               if (1 == frequency_points.count(frequency)) {
                 frequency_points[frequency].emplace_back(ix, iy);
               } else {
