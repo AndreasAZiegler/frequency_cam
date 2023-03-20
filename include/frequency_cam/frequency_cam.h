@@ -404,8 +404,8 @@ private:
         //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
         //           << ", number of points: " << number_of_points.at(i) << std::endl;
         // auto frequency = std::get<0>(filtered_frequency_points.at(i));
-        csv_file_ << "," << std::get<1>(filtered_frequency_points.at(i)) << ","
-                  << std::get<2>(filtered_frequency_points.at(i));
+        csv_file_ << ";" << std::get<0>(filtered_frequency_points.at(i)) << ";"
+                  << std::get<1>(filtered_frequency_points.at(i));
         cv::circle(
           rawImg,
           {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
@@ -417,7 +417,7 @@ private:
       nrDetectedWands_++;
     } else {
       csv_file_ << trigger_timestamp;
-      csv_file_ << "," << -1 << "," << -1  << "," << -1 << "," << -1 << "," << -1 << "," << -1 << "\n";
+      csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
     }
 
     return (rawImg);
