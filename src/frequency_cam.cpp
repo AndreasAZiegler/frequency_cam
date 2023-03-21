@@ -221,7 +221,7 @@ void FrequencyCam::setTriggers(const std::string & triggers_file) {
 }
 
 // void FrequencyCam::sort3Kp(vector<cv::KeyPoint> &kp) {
-void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp) {
+void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max) {
   // Sorts from closest together to most seperated
   // vector<cv::KeyPoint> cp_kp;
   std::vector<std::tuple<double, double, double>> cp_kp;
@@ -236,8 +236,10 @@ void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp) 
     }
   }
 
-  int idx_min = arg_min(d);
-  int idx_max = arg_max(d);
+  // int idx_min = arg_min(d);
+  // int idx_max = arg_max(d);
+  idx_min = arg_min(d);
+  idx_max = arg_max(d);
   switch (idx_max) {
   case 0:
     kp.at(1) = cp_kp.at(2);

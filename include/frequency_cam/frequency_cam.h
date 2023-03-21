@@ -365,7 +365,9 @@ private:
 
     // if (!filtered_frequency_points.empty()) {
     if (filtered_frequency_points.size() == 3) {
-      sort3Kp(filtered_frequency_points);
+      int idx_min;
+      int idx_max;
+      sort3Kp(filtered_frequency_points, idx_min, idx_max);
 
       // Check if points are on a line (are collinear)
       // double residual = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
@@ -406,11 +408,29 @@ private:
         // auto frequency = std::get<0>(filtered_frequency_points.at(i));
         csv_file_ << ";" << std::get<0>(filtered_frequency_points.at(i)) << ";"
                   << std::get<1>(filtered_frequency_points.at(i));
+        double color_level = 0;
+        if (i == 0) {
+          color_level = 1000;
+        } else if (i == 1) {
+          color_level = 800;
+        } else if (i == 2) {
+          color_level = 600;
+        }
         cv::circle(
           rawImg,
           {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
            static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
-          2, CV_RGB(550, 550, 550), 4);
+          // 2, CV_RGB(550, 550, 550), 4);
+          12, CV_RGB(color_level, color_level, color_level), 6);
+           //    cv::putText(rawImg, std::to_string(i),
+           //                {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
+           //                 static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
+           //                cv::FONT_HERSHEY_SIMPLEX,
+           //                2,
+           //                550,
+           //                4);
+          cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 360}, cv::FONT_HERSHEY_SIMPLEX, 2, 550, 4);
+          cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 500}, cv::FONT_HERSHEY_SIMPLEX, 2, 550, 4);
       }
       csv_file_ << "\n";
 
@@ -428,7 +448,7 @@ private:
     return (static_cast<uint32_t>((t / 1000) & 0xFFFFFFFF));
   }
 
-  void sort3Kp(std::vector<std::tuple<double, double, double>>& kp);
+  void sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max);
 
   // ------ variables ----
   State * state_{0};
