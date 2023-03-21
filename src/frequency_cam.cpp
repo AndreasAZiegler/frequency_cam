@@ -123,14 +123,14 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
 {
   if (hasValidTime_ || !externalTriggers_.empty()) {
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-    uint64_t difference = 1e6;
+    uint64_t difference = 1e9;
     uint64_t trigger_time = 0;
     uint64_t event_time = 0;
 
     std::vector<uint64_t>::iterator it = eventTimesNs_.end();
     std::vector<uint64_t>::iterator iterator_to_remove = externalTriggers_.end();
     if (!externalTriggers_.empty()) {
-      uint64_t min_difference = 1e6;
+      uint64_t min_difference = difference;
       // for (const auto& trigger_time_i : externalTriggers_) {
       for (auto trigger_it = externalTriggers_.begin(); trigger_it != externalTriggers_.end(); trigger_it++) {
         it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = *trigger_it] (uint64_t a, uint64_t b) {
@@ -169,11 +169,11 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
     } 
     eventTimesNs_.clear();
 
-    if (difference < 500 * 1e3) {
+    if (difference < 1000 * 1e3) {
       // std::cout << "event time: " << event_time << std::endl;
       // std::cout << "trigger time: " << trigger_time << std::endl;
       // std::cout << "difference: " << difference << std::endl;
-      if (!hasValidTime_ && !externalTriggers_.empty() && iterator_to_remove != externalTriggers_.end()) {
+      if (!externalTriggers_.empty() && iterator_to_remove != externalTriggers_.end()) {
         externalTriggers_.erase(iterator_to_remove);
         // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
       }
