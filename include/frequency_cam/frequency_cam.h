@@ -39,7 +39,7 @@ int roundUp(const int numToRound, const int multiple);
 class FrequencyCam : public event_array_codecs::EventProcessor
 {
 public:
-  FrequencyCam() : csv_file_("frequency_points.csv") { csv_file_ << "timestamp,x,y,frequency.\n"; }
+  FrequencyCam() : csv_file_("frequency_points.csv") { csv_file_ << "timestamp,x,y\n"; }
   ~FrequencyCam();
 
   FrequencyCam(const FrequencyCam &) = delete;
