@@ -230,7 +230,7 @@ void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp, 
   for (std::size_t i = 0; i < 2; i++) {
     for (std::size_t j = i + 1; j < 3; j++) {
       // cv::Point2f diff = kp.at(i).pt - kp.at(j).pt;
-      cv::Point2d diff {std::get<1>(kp.at(i)) - std::get<1>(kp.at(j)), std::get<2>(kp.at(i)) - std::get<2>(kp.at(j))};
+      cv::Point2d diff {std::get<0>(kp.at(i)) - std::get<0>(kp.at(j)), std::get<1>(kp.at(i)) - std::get<1>(kp.at(j))};
       double dist = sqrt(diff.x * diff.x + diff.y * diff.y);
       d.push_back(dist);
     }
