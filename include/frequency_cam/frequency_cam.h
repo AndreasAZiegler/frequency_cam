@@ -367,7 +367,10 @@ private:
     if (filtered_frequency_points.size() == 3) {
       int idx_min;
       int idx_max;
-      sort3Kp(filtered_frequency_points, idx_min, idx_max);
+      double dist_0_1;
+      double dist_1_2;
+      double dist_0_2;
+      sort3Kp(filtered_frequency_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
 
       // Check if points are on a line (are collinear)
       // double residual = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
@@ -387,6 +390,7 @@ private:
       // std::cout << "residual: " << std::fabs(residual) << std::endl;
 
 
+      // Line constraint from https://stackoverflow.com/questions/28619791/how-do-i-check-to-see-if-three-points-form-a-straight-line
       // Eigen::Matrix3f matrix;
       // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
       //           std::get<0>(filtered_frequency_points.at(1)), std::get<1>(filtered_frequency_points.at(1)), 1.0,
@@ -429,13 +433,31 @@ private:
            //                2,
            //                550,
            //                4);
-          cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 360}, cv::FONT_HERSHEY_SIMPLEX, 2, 550, 4);
-          cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 500}, cv::FONT_HERSHEY_SIMPLEX, 2, 550, 4);
       }
       csv_file_ << "\n";
 
+      cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "dist_1_2: " + std::to_string(dist_1_2), {50, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "dist_0_2: " + std::to_string(dist_0_2), {50, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+
+      auto p1x = std::get<0>(filtered_frequency_points.at(0));
+      auto p1y = std::get<1>(filtered_frequency_points.at(0));
+      cv::putText(rawImg, "p0: x: " + std::to_string(p1x), {1000, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "p0: y: " + std::to_string(p1y), {1000, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      auto p2x = std::get<0>(filtered_frequency_points.at(1));
+      auto p2y = std::get<1>(filtered_frequency_points.at(1));
+      cv::putText(rawImg, "p1: x: " + std::to_string(p2x), {1000, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "p1: y: " + std::to_string(p2y), {1000, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      auto p3x = std::get<0>(filtered_frequency_points.at(2));
+      auto p3y = std::get<1>(filtered_frequency_points.at(2));
+      cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+
       nrDetectedWands_++;
     } else {
+      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
       csv_file_ << trigger_timestamp;
       csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
     }
@@ -448,7 +470,7 @@ private:
     return (static_cast<uint32_t>((t / 1000) & 0xFFFFFFFF));
   }
 
-  void sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max);
+  void sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max, double& dist_0_1, double& dist_1_2, double& dist_0_2);
 
   // ------ variables ----
   State * state_{0};

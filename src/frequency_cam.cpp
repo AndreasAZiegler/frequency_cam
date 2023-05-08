@@ -221,7 +221,7 @@ void FrequencyCam::setTriggers(const std::string & triggers_file) {
 }
 
 // void FrequencyCam::sort3Kp(vector<cv::KeyPoint> &kp) {
-void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max) {
+void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max, double& dist_0_1, double& dist_1_2, double& dist_0_2) {
   // Sorts from closest together to most seperated
   // vector<cv::KeyPoint> cp_kp;
   std::vector<std::tuple<double, double, double>> cp_kp;
@@ -271,6 +271,20 @@ void FrequencyCam::sort3Kp(std::vector<std::tuple<double, double, double>>& kp, 
       kp.at(2) = cp_kp.at(1);
     }
     break;
+  }
+
+  cv::Point2d diff_0_1 {std::get<0>(kp.at(0)) - std::get<0>(kp.at(1)), std::get<1>(kp.at(0)) - std::get<1>(kp.at(1))};
+  dist_0_1 = sqrt(diff_0_1.x * diff_0_1.x + diff_0_1.y * diff_0_1.y);
+  cv::Point2d diff_1_2 {std::get<0>(kp.at(1)) - std::get<0>(kp.at(2)), std::get<1>(kp.at(1)) - std::get<1>(kp.at(2))};
+  dist_1_2 = sqrt(diff_1_2.x * diff_1_2.x + diff_1_2.y * diff_1_2.y);
+  cv::Point2d diff_0_2 {std::get<0>(kp.at(0)) - std::get<0>(kp.at(2)), std::get<1>(kp.at(0)) - std::get<1>(kp.at(2))};
+  dist_0_2 = sqrt(diff_0_2.x * diff_0_2.x + diff_0_2.y * diff_0_2.y);
+
+  if (dist_0_1 >= dist_1_2) {
+    std::cout << "diff_0_1 >= diff_1_2" << std::endl;
+  }
+  if (dist_1_2 >= dist_0_2) {
+    std::cout << "diff_1_2 >= diff_0_2" << std::endl;
   }
 }
 
