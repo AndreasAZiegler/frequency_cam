@@ -21,6 +21,12 @@
 #include <iomanip>
 #include <iostream>
 
+int64_t getDifference(uint64_t first, uint64_t second) {
+    uint64_t abs_diff = (first > second) ? (first - second): (second - first);
+    assert(abs_diff<=INT64_MAX);
+    return (first > second) ? static_cast<int64_t>(abs_diff) : -static_cast<int64_t>(abs_diff);
+}
+
 template <typename T, typename A> int arg_max(std::vector<T, A> const &vec) {
   return static_cast<int>(
       std::distance(vec.begin(), max_element(vec.begin(), vec.end())));
@@ -171,15 +177,22 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
         event_time = *it;
       }
     } 
+    uint64_t event_time_start = eventTimesNs_.front();
+    uint64_t event_time_end = eventTimesNs_.back();
 
-    // 500us
-    if (difference < 500 * 1e3) {
-      // std::cout << "event time: " << event_time << std::endl;
-      // std::cout << "trigger time: " << trigger_time << std::endl;
-      // std::cout << "difference: " << difference << std::endl;
+    // 100us
+    if (difference < 100 * 1e3) {
+      std::cout << "nrSyncMatches_: " << nrSyncMatches_ << std::endl;
+      std::cout << "event time: " << event_time << std::endl;
+      std::cout << "trigger time: " << trigger_time << std::endl;
+      std::cout << "difference: " << difference << std::endl;
+      std::cout << "event time start: " << event_time_start << std::endl;
+      std::cout << "event time end  : " << event_time_end << std::endl;
+      std::cout << "event slide duration: " << getDifference(event_time_end, event_time_start) / 1000000.0 << " ms" << std::endl;
+      std::cout << std::endl;
       if (!externalTriggers_.empty() && iterator_to_remove != externalTriggers_.end()) {
         externalTriggers_.erase(iterator_to_remove);
-        std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+        // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
       }
       hasValidTime_ = false;
       // eventTimesNs_.clear();
