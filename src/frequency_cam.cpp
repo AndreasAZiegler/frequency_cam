@@ -169,13 +169,14 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
     } 
     eventTimesNs_.clear();
 
-    if (difference < 1000 * 1e3) {
+    // 500us
+    if (difference < 500 * 1e3) {
       // std::cout << "event time: " << event_time << std::endl;
       // std::cout << "trigger time: " << trigger_time << std::endl;
       // std::cout << "difference: " << difference << std::endl;
       if (!externalTriggers_.empty() && iterator_to_remove != externalTriggers_.end()) {
         externalTriggers_.erase(iterator_to_remove);
-        // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+        std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
       }
       hasValidTime_ = false;
       // eventTimesNs_.clear();
@@ -192,6 +193,8 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
       return (
         overlayEvents ? makeTransformedFrequencyImage<NoTF, EventFrameUpdater>(evImg, dt, trigger_time)
                       : makeTransformedFrequencyImage<NoTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
+    } else {
+      // std::cout << "difference too big: " << difference << std::endl;
     }
   }
   return {};
