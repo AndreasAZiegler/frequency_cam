@@ -141,7 +141,6 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
     std::vector<uint64_t>::iterator iterator_to_remove = externalTriggers_.end();
     if (!externalTriggers_.empty()) {
       uint64_t min_difference = difference;
-      // for (const auto& trigger_time_i : externalTriggers_) {
       for (auto trigger_it = externalTriggers_.begin(); trigger_it != externalTriggers_.end(); trigger_it++) {
         it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = *trigger_it] (uint64_t a, uint64_t b) {
               uint64_t diff_a =  (a > value) ? a - value : value - a;
@@ -164,7 +163,6 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
       }
       difference = min_difference;
     } else {
-    // if (hasValidTime_) {
       // Get the smallest difference
       auto it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = sensor_time_] (uint64_t a, uint64_t b) {
             uint64_t diff_a =  (a > value) ? a - value : value - a;
@@ -195,7 +193,6 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
         // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
       }
       hasValidTime_ = false;
-      // eventTimesNs_.clear();
       nrSyncMatches_++;
 
       if (overlayEvents) {
