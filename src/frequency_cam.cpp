@@ -118,11 +118,15 @@ void FrequencyCam::initializeState(uint32_t width, uint32_t height, uint64_t t_f
   }
 }
 
-std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
+std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
   cv::Mat * evImg, bool overlayEvents, bool useLogFrequency, float dt)
 {
-  if (hasValidTime_ || !externalTriggers_.empty()) {
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+  std::vector<cv::Mat> result;
+  bool distance_too_big = false;
+  // In case the data comes from a ROS bag, chances are that one chunck of data
+  // contains events corresponding to multiiple trigger time stamps. Therefore,
+  // we loop until the temporal distance gets too big.
+  while (!distance_too_big && (hasValidTime_ || !externalTriggers_.empty())) { 
     uint64_t difference = 1e9;
     uint64_t trigger_time = 0;
     uint64_t event_time = 0;
@@ -167,7 +171,6 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
         event_time = *it;
       }
     } 
-    eventTimesNs_.clear();
 
     // 500us
     if (difference < 500 * 1e3) {
@@ -186,18 +189,25 @@ std::optional<cv::Mat> FrequencyCam::makeFrequencyAndEventImage(
         *evImg = cv::Mat::zeros(height_, width_, CV_8UC1);
       }
       if (useLogFrequency) {
-        return (
+        result.emplace_back(
           overlayEvents ? makeTransformedFrequencyImage<LogTF, EventFrameUpdater>(evImg, dt, trigger_time)
                         : makeTransformedFrequencyImage<LogTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
       }
-      return (
+      result.emplace_back(
         overlayEvents ? makeTransformedFrequencyImage<NoTF, EventFrameUpdater>(evImg, dt, trigger_time)
                       : makeTransformedFrequencyImage<NoTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
     } else {
+      distance_too_big = true;
       // std::cout << "difference too big: " << difference << std::endl;
     }
   }
-  return {};
+  eventTimesNs_.clear();
+
+  if (result.empty()) {
+    return {};
+  } else {
+    return result;
+  }
 }
 
 void FrequencyCam::getStatistics(size_t * numEvents) const { *numEvents = eventCount_; }

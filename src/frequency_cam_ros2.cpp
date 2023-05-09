@@ -125,26 +125,18 @@ void FrequencyCamROS::playEventsFromBag(const std::string & bagName, const std::
     EventArray::SharedPtr msg(new EventArray());
     serialization.deserialize_message(&serializedMsg, &(*msg));
     if (msg) {
-      // const rclcpp::Time t(msg->header.stamp);
       eventMsg(msg);
-        // if (t - lastFrameTime > delta_t) {
-        cv::Mat eventImg;
-        if (auto freqImg = cam_.makeFrequencyAndEventImage(
-          &eventImg, overlayEvents_, useLogFrequency_, eventImageDt_)) {
-          const cv::Mat window =
-            imageMaker_.make((lastFrameTime + delta_t).nanoseconds(), *freqImg, eventImg);
-          lastFrameTime = lastFrameTime + delta_t;
-          char fname[256];
-          snprintf(fname, sizeof(fname) - 1, "/frame_%05u.jpg", frameCount);
-          cv::imwrite(path + fname, window);
-          frameCount++;
-        }
-      // }
-      // }
-      // else {
-      //   hasValidTime = true;
-      //   lastFrameTime = t;
-      // }
+      cv::Mat eventImg;
+      if (auto freqImg = cam_.makeFrequencyAndEventImage(
+        &eventImg, overlayEvents_, useLogFrequency_, eventImageDt_)) {
+        const cv::Mat window =
+          imageMaker_.make((lastFrameTime + delta_t).nanoseconds(), (*freqImg).front(), eventImg);
+        lastFrameTime = lastFrameTime + delta_t;
+        char fname[256];
+        snprintf(fname, sizeof(fname) - 1, "/frame_%05u.jpg", frameCount);
+        cv::imwrite(path + fname, window);
+        frameCount++;
+      }
     } else {
       RCLCPP_WARN(get_logger(), "skipped invalid message type in bag!");
     }
@@ -198,7 +190,7 @@ void FrequencyCamROS::frameTimerExpired()
     if (auto freqImg =
       cam_.makeFrequencyAndEventImage(&eventImg, overlayEvents_, useLogFrequency_, eventImageDt_)) {
       const cv::Mat window =
-        imageMaker_.make(this->get_clock()->now().nanoseconds(), *freqImg, eventImg);
+        imageMaker_.make(this->get_clock()->now().nanoseconds(), (*freqImg).front(), eventImg);
       imagePub_.publish(cv_bridge::CvImage(header_, "bgr8", window).toImageMsg());
     }
   }

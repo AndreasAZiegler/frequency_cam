@@ -88,7 +88,7 @@ public:
   void initializeState(uint32_t width, uint32_t height, uint64_t t_first, uint64_t t_off);
 
   // returns frequency image
-  std::optional<cv::Mat> makeFrequencyAndEventImage(
+  std::optional<std::vector<cv::Mat>> makeFrequencyAndEventImage(
     cv::Mat * eventImage, bool overlayEvents, bool useLogFrequency, float dt);
 
   void getStatistics(size_t * numEvents) const;
