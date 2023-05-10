@@ -142,6 +142,7 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
     std::vector<uint64_t>::iterator it = eventTimesNs_.end();
     std::vector<uint64_t>::iterator iterator_to_remove = externalTriggers_.end();
     std::vector<std::vector<uint64_t>::iterator> iterators_to_remove;
+    // We are using the external trigger txt file as source for the trigger time stamps
     if (!externalTriggers_.empty()) {
       // uint64_t min_difference = difference;
       std::cout << "External triggers:" << std::endl;
@@ -152,7 +153,9 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
           break;
         }
       }
+      // We go through all the trigger time stamps (unless the distance gets too high)
       for (auto trigger_it = externalTriggers_.begin(); trigger_it != externalTriggers_.end(); trigger_it++) {
+        // Get the closest time stamp of the events
         it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = *trigger_it] (uint64_t a, uint64_t b) {
               uint64_t diff_a =  (a > value) ? a - value : value - a;
               uint64_t diff_b = (value > b) ? value - b : b - value;
@@ -160,18 +163,6 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
         });
         if (it != eventTimesNs_.end()) {
           difference = (*it > *trigger_it) ? *it - *trigger_it : *trigger_it - *it;
-          // if (difference < min_difference) {
-          // trigger_time = *trigger_it;
-          // event_time = *it;
-          // iterator_to_remove = trigger_it;
-          //   // std::cout << "event time: " << event_time << std::endl;
-          //   // std::cout << "trigger time: " << trigger_time << std::endl;
-          //   // // externalTriggers_.erase(it);
-          //   // std::cout << "difference: " << difference << std::endl;
-          //   // std::cout << "event time start: " << event_time_start << std::endl;
-          //   // std::cout << "event time end  : " << event_time_end << std::endl;
-          //   min_difference = difference;
-          // }
 
           std::cout << std::endl;
           std::cout << "trigger time: " << *trigger_it << std::endl;
@@ -181,6 +172,7 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
           std::cout << "event time end  : " << eventTimesNs_.back() << std::endl;
           std::cout << "event slide duration: " << getDifference(eventTimesNs_.back(), eventTimesNs_.front()) / 1000000.0 << " ms" << std::endl;
 
+          // 1000us
           if (difference < 1000 * 1e3) {
             trigger_time = *trigger_it;
             event_time = *it;
@@ -215,6 +207,8 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
             }
           }
 
+          // If the current trigger time stamp is larger then the end time stamp of the
+          // event slice, we do not continue
           uint64_t event_time_end = eventTimesNs_.back();
           if (*trigger_it >= event_time_end) {
             distance_too_big = true;
@@ -222,7 +216,8 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
           }
         }
       }
-      std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+      // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+      // We remove the trigger time stamps for which we found a corresponding event time stamp 
       for (auto it : iterators_to_remove) {
         if (it != externalTriggers_.end()) {
           std::cout << "remove: " << *it << std::endl;
@@ -231,9 +226,13 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
       }
       externalTriggers_.erase(remove(externalTriggers_.begin(), externalTriggers_.end(), 0), externalTriggers_.end() );
       iterators_to_remove.clear();
-      std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+      // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+      
+      // If we have gone through all the trigger time stamps or stopped, we stop the while loop
       distance_too_big = true;
-    } else {
+    }
+    // We are using the received trigger time stamps
+    else {
       // Get the smallest difference
       auto it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = sensor_time_] (uint64_t a, uint64_t b) {
             uint64_t diff_a =  (a > value) ? a - value : value - a;
@@ -255,8 +254,7 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
       // std::cout << "event time end  : " << event_time_end << std::endl;
 
       // 500us
-      // if (difference < 500 * 1e3) {
-      if (difference < 1000 * 1e3) {
+      if (difference < 500 * 1e3) {
         std::cout << "nrSyncMatches_: " << nrSyncMatches_ << std::endl;
         std::cout << "iteration: " << iteration << std::endl;
         std::cout << "event time: " << event_time << std::endl;
@@ -292,6 +290,8 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
     } 
     iteration++;
   }
+
+  // Clear all the  
   eventTimesNs_.clear();
 
   if (result.empty()) {
