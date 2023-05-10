@@ -499,7 +499,7 @@ private:
   uint32_t height_{0};          // image height
   uint64_t eventCount_{0};
   uint32_t lastEventTime_;
-  std::vector<uint64_t> eventTimesNs_{0};
+  std::vector<uint64_t> eventTimesNs_;
   // ---------- variables for state update
   variable_t c_[2];
   variable_t c_p_{0};
