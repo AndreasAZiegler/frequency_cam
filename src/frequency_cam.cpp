@@ -132,6 +132,8 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
   // In case the data comes from a ROS bag, chances are that one chunck of data
   // contains events corresponding to multiiple trigger time stamps. Therefore,
   // we loop until the temporal distance gets too big.
+  // if (hasValidTime_ || !externalTriggers_.empty()) { 
+  std::size_t iteration = 0;
   while (!distance_too_big && (hasValidTime_ || !externalTriggers_.empty())) { 
     uint64_t difference = 1e9;
     uint64_t trigger_time = 0;
@@ -139,8 +141,17 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
 
     std::vector<uint64_t>::iterator it = eventTimesNs_.end();
     std::vector<uint64_t>::iterator iterator_to_remove = externalTriggers_.end();
+    std::vector<std::vector<uint64_t>::iterator> iterators_to_remove;
     if (!externalTriggers_.empty()) {
-      uint64_t min_difference = difference;
+      // uint64_t min_difference = difference;
+      std::cout << "External triggers:" << std::endl;
+      std::size_t break_after_ten = 0;
+      for (const auto& trigger : externalTriggers_) {
+        std::cout << trigger << std::endl;
+        if (break_after_ten++ > 10) {
+          break;
+        }
+      }
       for (auto trigger_it = externalTriggers_.begin(); trigger_it != externalTriggers_.end(); trigger_it++) {
         it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = *trigger_it] (uint64_t a, uint64_t b) {
               uint64_t diff_a =  (a > value) ? a - value : value - a;
@@ -149,19 +160,79 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
         });
         if (it != eventTimesNs_.end()) {
           difference = (*it > *trigger_it) ? *it - *trigger_it : *trigger_it - *it;
-          if (difference < min_difference) {
+          // if (difference < min_difference) {
+          // trigger_time = *trigger_it;
+          // event_time = *it;
+          // iterator_to_remove = trigger_it;
+          //   // std::cout << "event time: " << event_time << std::endl;
+          //   // std::cout << "trigger time: " << trigger_time << std::endl;
+          //   // // externalTriggers_.erase(it);
+          //   // std::cout << "difference: " << difference << std::endl;
+          //   // std::cout << "event time start: " << event_time_start << std::endl;
+          //   // std::cout << "event time end  : " << event_time_end << std::endl;
+          //   min_difference = difference;
+          // }
+
+          std::cout << std::endl;
+          std::cout << "trigger time: " << *trigger_it << std::endl;
+          std::cout << "event time: " << *it << std::endl;
+          std::cout << "difference: " << difference << std::endl;
+          std::cout << "event time start: " << eventTimesNs_.front() << std::endl;
+          std::cout << "event time end  : " << eventTimesNs_.back() << std::endl;
+          std::cout << "event slide duration: " << getDifference(eventTimesNs_.back(), eventTimesNs_.front()) / 1000000.0 << " ms" << std::endl;
+
+          if (difference < 1000 * 1e3) {
             trigger_time = *trigger_it;
             event_time = *it;
             iterator_to_remove = trigger_it;
+            // uint64_t event_time_start = eventTimesNs_.front();
+            // uint64_t event_time_end = eventTimesNs_.back();
+            std::cout << "nrSyncMatches_: " << nrSyncMatches_ << std::endl;
+            std::cout << "iteration: " << iteration << std::endl;
             // std::cout << "event time: " << event_time << std::endl;
             // std::cout << "trigger time: " << trigger_time << std::endl;
-            // // externalTriggers_.erase(it);
             // std::cout << "difference: " << difference << std::endl;
-            min_difference = difference;
+            // std::cout << "event time start: " << event_time_start << std::endl;
+            // std::cout << "event time end  : " << event_time_end << std::endl;
+            // std::cout << "event slide duration: " << getDifference(event_time_end, event_time_start) / 1000000.0 << " ms" << std::endl;
+            std::cout << std::endl;
+            iterators_to_remove.emplace_back(iterator_to_remove);
+
+            hasValidTime_ = false;
+            nrSyncMatches_++;
+
+            if (overlayEvents) {
+              *evImg = cv::Mat::zeros(height_, width_, CV_8UC1);
+            }
+            if (useLogFrequency) {
+              result.emplace_back(
+                overlayEvents ? makeTransformedFrequencyImage<LogTF, EventFrameUpdater>(evImg, dt, trigger_time)
+                              : makeTransformedFrequencyImage<LogTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
+            } else {
+            result.emplace_back(
+              overlayEvents ? makeTransformedFrequencyImage<NoTF, EventFrameUpdater>(evImg, dt, trigger_time)
+                            : makeTransformedFrequencyImage<NoTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
+            }
+          }
+
+          uint64_t event_time_end = eventTimesNs_.back();
+          if (*trigger_it >= event_time_end) {
+            distance_too_big = true;
+            break;
           }
         }
       }
-      difference = min_difference;
+      std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+      for (auto it : iterators_to_remove) {
+        if (it != externalTriggers_.end()) {
+          std::cout << "remove: " << *it << std::endl;
+          *it = 0;
+        }
+      }
+      externalTriggers_.erase(remove(externalTriggers_.begin(), externalTriggers_.end(), 0), externalTriggers_.end() );
+      iterators_to_remove.clear();
+      std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+      distance_too_big = true;
     } else {
       // Get the smallest difference
       auto it = std::min_element(eventTimesNs_.begin(), eventTimesNs_.end(), [&value = sensor_time_] (uint64_t a, uint64_t b) {
@@ -174,42 +245,52 @@ std::optional<std::vector<cv::Mat>> FrequencyCam::makeFrequencyAndEventImage(
         trigger_time = sensor_time_;
         event_time = *it;
       }
-    } 
-    uint64_t event_time_start = eventTimesNs_.front();
-    uint64_t event_time_end = eventTimesNs_.back();
+      uint64_t event_time_start = eventTimesNs_.front();
+      uint64_t event_time_end = eventTimesNs_.back();
+      // std::cout << "nrSyncMatches_: " << nrSyncMatches_ << std::endl;
+      // std::cout << "event time: " << event_time << std::endl;
+      // std::cout << "trigger time: " << trigger_time << std::endl;
+      // std::cout << "difference: " << difference << std::endl;
+      // std::cout << "event time start: " << event_time_start << std::endl;
+      // std::cout << "event time end  : " << event_time_end << std::endl;
 
-    // 100us
-    if (difference < 100 * 1e3) {
-      std::cout << "nrSyncMatches_: " << nrSyncMatches_ << std::endl;
-      std::cout << "event time: " << event_time << std::endl;
-      std::cout << "trigger time: " << trigger_time << std::endl;
-      std::cout << "difference: " << difference << std::endl;
-      std::cout << "event time start: " << event_time_start << std::endl;
-      std::cout << "event time end  : " << event_time_end << std::endl;
-      std::cout << "event slide duration: " << getDifference(event_time_end, event_time_start) / 1000000.0 << " ms" << std::endl;
-      std::cout << std::endl;
-      if (!externalTriggers_.empty() && iterator_to_remove != externalTriggers_.end()) {
-        externalTriggers_.erase(iterator_to_remove);
-        // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
-      }
-      hasValidTime_ = false;
-      nrSyncMatches_++;
+      // 500us
+      // if (difference < 500 * 1e3) {
+      if (difference < 1000 * 1e3) {
+        std::cout << "nrSyncMatches_: " << nrSyncMatches_ << std::endl;
+        std::cout << "iteration: " << iteration << std::endl;
+        std::cout << "event time: " << event_time << std::endl;
+        std::cout << "trigger time: " << trigger_time << std::endl;
+        std::cout << "difference: " << difference << std::endl;
+        std::cout << "event time start: " << event_time_start << std::endl;
+        std::cout << "event time end  : " << event_time_end << std::endl;
+        std::cout << "event slide duration: " << getDifference(event_time_end, event_time_start) / 1000000.0 << " ms" << std::endl;
+        std::cout << std::endl;
+        if (!externalTriggers_.empty() && iterator_to_remove != externalTriggers_.end()) {
+          externalTriggers_.erase(iterator_to_remove);
+          // std::cout << "externalTriggers_.size(): " << externalTriggers_.size() << std::endl;
+        }
+        hasValidTime_ = false;
+        nrSyncMatches_++;
 
-      if (overlayEvents) {
-        *evImg = cv::Mat::zeros(height_, width_, CV_8UC1);
-      }
-      if (useLogFrequency) {
+        if (overlayEvents) {
+          *evImg = cv::Mat::zeros(height_, width_, CV_8UC1);
+        }
+        if (useLogFrequency) {
+          result.emplace_back(
+            overlayEvents ? makeTransformedFrequencyImage<LogTF, EventFrameUpdater>(evImg, dt, trigger_time)
+                          : makeTransformedFrequencyImage<LogTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
+        } else {
         result.emplace_back(
-          overlayEvents ? makeTransformedFrequencyImage<LogTF, EventFrameUpdater>(evImg, dt, trigger_time)
-                        : makeTransformedFrequencyImage<LogTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
+          overlayEvents ? makeTransformedFrequencyImage<NoTF, EventFrameUpdater>(evImg, dt, trigger_time)
+                        : makeTransformedFrequencyImage<NoTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
+        }
+      } else {
+        distance_too_big = true;
+        // std::cout << "difference too big: " << difference << std::endl;
       }
-      result.emplace_back(
-        overlayEvents ? makeTransformedFrequencyImage<NoTF, EventFrameUpdater>(evImg, dt, trigger_time)
-                      : makeTransformedFrequencyImage<NoTF, NoEventFrameUpdater>(evImg, dt, trigger_time));
-    } else {
-      distance_too_big = true;
-      // std::cout << "difference too big: " << difference << std::endl;
-    }
+    } 
+    iteration++;
   }
   eventTimesNs_.clear();
 
