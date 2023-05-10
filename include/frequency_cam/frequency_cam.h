@@ -48,6 +48,15 @@ public:
   // ------------- inherited from EventProcessor
   inline void eventCD(uint64_t sensor_time, uint16_t ex, uint16_t ey, uint8_t polarity) override
   {
+    if (!initialize_time_stamps_) {
+      initialize_time_stamps_ = true;
+      if (sensor_time > 15000000000) {
+        fix_time_stamps_ = true;
+      }
+    }
+    if (fix_time_stamps_) {
+      sensor_time -= 16777215000;
+    }
     // std::cout << "Event: time stamp: " << sensor_time << std::endl;
     Event e(shorten_time(sensor_time), ex, ey, polarity);
     updateState(&state_[e.y * width_ + e.x], e);
@@ -58,6 +67,16 @@ public:
   }
   void eventExtTrigger(uint64_t sensor_time, uint8_t edge, uint8_t /*id*/) override
   {
+    if (!initialize_time_stamps_) {
+      initialize_time_stamps_ = true;
+      if (sensor_time > 15000000000) {
+        fix_time_stamps_ = true;
+      }
+    }
+    if (fix_time_stamps_) {
+      sensor_time -= 16777215000;
+    }
+    // std::cout << "Trigger: time stamp: " << sensor_time << std::endl;
     if (!eventExtTriggerInitialized_) {
       lasteExternalEdge_ = edge;
       eventExtTriggerInitialized_ = true;
@@ -506,6 +525,8 @@ private:
   std::ofstream csv_file_;
   std::vector<uint64_t> externalTriggers_;
   uint64_t lastEventTimeNs_;
+  bool initialize_time_stamps_{false};
+  bool fix_time_stamps_{false}; 
 };
 std::ostream & operator<<(std::ostream & os, const FrequencyCam::Event & e);
 }  // namespace frequency_cam
