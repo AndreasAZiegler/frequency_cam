@@ -48,6 +48,7 @@ public:
   // ------------- inherited from EventProcessor
   inline void eventCD(uint64_t sensor_time, uint16_t ex, uint16_t ey, uint8_t polarity) override
   {
+    // If the first time stamp is > 15s, there is an offset which we subtract every time.
     if (!initialize_time_stamps_) {
       initialize_time_stamps_ = true;
       if (sensor_time > 15000000000) {
@@ -67,6 +68,7 @@ public:
   }
   void eventExtTrigger(uint64_t sensor_time, uint8_t edge, uint8_t /*id*/) override
   {
+    // If the first time stamp is > 15s, there is an offset which we subtract every time.
     if (!initialize_time_stamps_) {
       initialize_time_stamps_ = true;
       if (sensor_time > 15000000000) {
@@ -273,6 +275,7 @@ private:
           if (dt < maxDt * timeoutCycles_ && dt * f < timeoutCycles_) {
             auto frequency = std::max(T::tf(f), minFreq);
             if (
+              // Only add points which are in our frequency range
               // (frequency > min_range_1 && frequency < max_range_1) ||
               (frequency > min_range_2 && frequency < max_range_2)) {
               frequency = roundUp(frequency, 250);
@@ -382,6 +385,7 @@ private:
       }
     }
 
+    // Only proceed if we detected three clusters (three markers)
     // if (!filtered_frequency_points.empty()) {
     if (filtered_frequency_points.size() == 3) {
       int idx_min;
@@ -422,6 +426,8 @@ private:
       // std::cout << "Filtered points:" << std::endl;
       // std::cout << "time stamp: " << lastEventTime_ << std::endl;
       //for (const auto & filtered_point : filtered_points) {
+
+      // Write to csv file
       csv_file_ << trigger_timestamp;
       for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
         // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
@@ -431,6 +437,8 @@ private:
         // auto frequency = std::get<0>(filtered_frequency_points.at(i));
         csv_file_ << ";" << std::get<0>(filtered_frequency_points.at(i)) << ";"
                   << std::get<1>(filtered_frequency_points.at(i));
+
+        // Visualize detected markers with circles
         double color_level = 0;
         if (i == 0) {
           color_level = 1000;
@@ -455,6 +463,7 @@ private:
       }
       csv_file_ << "\n";
 
+      // Add debug information to frame
       cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
