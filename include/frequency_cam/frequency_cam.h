@@ -481,6 +481,7 @@ private:
       csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
     }
 
+    cv::putText(rawImg, "time stamp: " + std::to_string(trigger_timestamp), {800, 600}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
     return (rawImg);
   }
 
