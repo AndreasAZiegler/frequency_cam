@@ -127,15 +127,19 @@ void FrequencyCamROS::playEventsFromBag(const std::string & bagName, const std::
     if (msg) {
       eventMsg(msg);
       cv::Mat eventImg;
-      if (auto freqImg = cam_.makeFrequencyAndEventImage(
+      if (auto freqImgs = cam_.makeFrequencyAndEventImage(
         &eventImg, overlayEvents_, useLogFrequency_, eventImageDt_)) {
-        const cv::Mat window =
-          imageMaker_.make((lastFrameTime + delta_t).nanoseconds(), (*freqImg).front(), eventImg);
-        lastFrameTime = lastFrameTime + delta_t;
-        char fname[256];
-        snprintf(fname, sizeof(fname) - 1, "/frame_%05u.jpg", frameCount);
-        cv::imwrite(path + fname, window);
-        frameCount++;
+        for (const auto& img : *freqImgs) {
+          const cv::Mat window =
+            imageMaker_.make((lastFrameTime + delta_t).nanoseconds(), img, eventImg);
+          lastFrameTime = lastFrameTime + delta_t;
+          char fname[256];
+          snprintf(fname, sizeof(fname) - 1, "/frame_%05u.jpg", frameCount);
+          cv::imwrite(path + fname, window);
+          frameCount++;
+        }
+      } else {
+        std::cout << "No valid output" << std::endl;
       }
     } else {
       RCLCPP_WARN(get_logger(), "skipped invalid message type in bag!");
