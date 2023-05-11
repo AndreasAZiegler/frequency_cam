@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Some system dependencies
 RUN apt-get update
-RUN apt-get install -y python3-wstool ros-galactic-ament-cmake-clang-format gdb
+RUN apt-get install -y python3-wstool ros-galactic-ament-cmake-clang-format gdb less
 
 # Spinnaker-sdk
 # Dependency for the Spinnaker-sdk
