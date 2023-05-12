@@ -250,7 +250,9 @@ private:
   template <class T, class U>
   cv::Mat makeTransformedFrequencyImage(cv::Mat * eventFrame, float eventImageDt, uint64_t trigger_timestamp)
   {
-    std::map<double, std::vector<std::tuple<int, int>>> frequency_points;
+    // std::map<double, std::vector<std::tuple<int, int>>> frequency_points;
+    std::vector<std::tuple<int, int>> frequency_points;
+
     // const int min_range_1 = 2800;
     // const int max_range_1 = 3200;
     // const int min_range_2 = 3800;
@@ -281,12 +283,15 @@ private:
               // frequency = roundUp(frequency, 250);
               // frequency = roundUp(frequency, 100);
               frequency = roundUp(frequency, 50);
+              frequency_points.emplace_back(ix, iy);
+              /*
               if (1 == frequency_points.count(frequency)) {
                 frequency_points[frequency].emplace_back(ix, iy);
               } else {
                 std::vector<std::tuple<int, int>> point{{ix, iy}};
                 frequency_points[frequency] = point;
               }
+              */
             }
             rawImg.at<float>(iy, ix) = frequency;
           } else {
@@ -298,11 +303,13 @@ private:
 
     std::vector<std::tuple<double, double, double>> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
-    for (const auto & frequency_point : frequency_points) {
+    // for (const auto & frequency_point : frequency_points) {
+      // std::cout << "Frequency: " << frequency_point.first << std::endl;
       std::vector<std::size_t> assigned_indices;
       // Going through all the points which are in the frequency range
       // for the reference point
-      for (std::size_t i = 0; i < frequency_point.second.size(); ++i) {
+      // for (std::size_t i = 0; i < frequency_point.second.size(); ++i) {
+      for (std::size_t i = 0; i < frequency_points.size(); ++i) {
         // Skip if the point was already assigned to a cluster
         if (std::count(assigned_indices.begin(), assigned_indices.end(), i)) {
           continue;
@@ -311,20 +318,25 @@ private:
         std::vector<std::size_t> candidate_indices;
         std::vector<double> x_values;
         std::vector<double> y_values;
-        auto x = std::get<0>(frequency_point.second.at(i));
-        auto y = std::get<1>(frequency_point.second.at(i));
+        // auto x = std::get<0>(frequency_point.second.at(i));
+        // auto y = std::get<1>(frequency_point.second.at(i));
+        auto x = std::get<0>(frequency_points.at(i));
+        auto y = std::get<1>(frequency_points.at(i));
 
         std::size_t counts = 0;
         // Going through all the remaining points which are in the frequency range
         // for the candidate points
-        for (std::size_t j = i + 1; j < frequency_point.second.size(); ++j) {
+        // for (std::size_t j = i + 1; j < frequency_point.second.size(); ++j) {
+        for (std::size_t j = i + 1; j < frequency_points.size(); ++j) {
           // Skip if the point was already assigned to a cluster
           if (std::count(assigned_indices.begin(), assigned_indices.end(), j)) {
             continue;
           }
 
-          auto x_candidate = std::get<0>(frequency_point.second.at(j));
-          auto y_candidate = std::get<1>(frequency_point.second.at(j));
+          // auto x_candidate = std::get<0>(frequency_point.second.at(j));
+          // auto y_candidate = std::get<1>(frequency_point.second.at(j));
+          auto x_candidate = std::get<0>(frequency_points.at(j));
+          auto y_candidate = std::get<1>(frequency_points.at(j));
 
           // Make sure that points in the same cluster are close
           // double distance = 10;
@@ -380,7 +392,8 @@ private:
             }
           }
           if (insert) {
-            filtered_frequency_points.emplace_back(mean_x, mean_y, frequency_point.first);
+            // filtered_frequency_points.emplace_back(mean_x, mean_y, frequency_point.first);
+            filtered_frequency_points.emplace_back(mean_x, mean_y, 750);
             number_of_points.emplace_back(x_values.size());
           }
 
@@ -388,7 +401,7 @@ private:
             assigned_indices.end(), candidate_indices.begin(), candidate_indices.end());
         }
       }
-    }
+    // }
 
     // Only proceed if we detected three clusters (three markers)
     // if (!filtered_frequency_points.empty()) {
