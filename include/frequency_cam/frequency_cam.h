@@ -250,7 +250,6 @@ private:
   template <class T, class U>
   cv::Mat makeTransformedFrequencyImage(cv::Mat * eventFrame, float eventImageDt, uint64_t trigger_timestamp)
   {
-    // std::map<double, std::vector<std::tuple<int, int>>> frequency_points;
     std::vector<std::tuple<int, int>> frequency_points;
 
     // const int min_range_1 = 2800;
@@ -278,20 +277,8 @@ private:
             auto frequency = std::max(T::tf(f), minFreq);
             if (
               // Only add points which are in our frequency range
-              // (frequency > min_range_1 && frequency < max_range_1) ||
               (frequency > min_range_2 && frequency < max_range_2)) {
-              // frequency = roundUp(frequency, 250);
-              // frequency = roundUp(frequency, 100);
-              frequency = roundUp(frequency, 50);
               frequency_points.emplace_back(ix, iy);
-              /*
-              if (1 == frequency_points.count(frequency)) {
-                frequency_points[frequency].emplace_back(ix, iy);
-              } else {
-                std::vector<std::tuple<int, int>> point{{ix, iy}};
-                frequency_points[frequency] = point;
-              }
-              */
             }
             rawImg.at<float>(iy, ix) = frequency;
           } else {
@@ -303,105 +290,96 @@ private:
 
     std::vector<std::tuple<double, double, double>> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
-    // for (const auto & frequency_point : frequency_points) {
-      // std::cout << "Frequency: " << frequency_point.first << std::endl;
-      std::vector<std::size_t> assigned_indices;
-      // Going through all the points which are in the frequency range
-      // for the reference point
-      // for (std::size_t i = 0; i < frequency_point.second.size(); ++i) {
-      for (std::size_t i = 0; i < frequency_points.size(); ++i) {
+    std::vector<std::size_t> assigned_indices;
+    // Going through all the points which are in the frequency range
+    // for the reference point
+    for (std::size_t i = 0; i < frequency_points.size(); ++i) {
+      // Skip if the point was already assigned to a cluster
+      if (std::count(assigned_indices.begin(), assigned_indices.end(), i)) {
+        continue;
+      }
+
+      std::vector<std::size_t> candidate_indices;
+      std::vector<double> x_values;
+      std::vector<double> y_values;
+      auto x = std::get<0>(frequency_points.at(i));
+      auto y = std::get<1>(frequency_points.at(i));
+
+      std::size_t counts = 0;
+      // Going through all the remaining points which are in the frequency range
+      // for the candidate points
+      for (std::size_t j = i + 1; j < frequency_points.size(); ++j) {
         // Skip if the point was already assigned to a cluster
-        if (std::count(assigned_indices.begin(), assigned_indices.end(), i)) {
+        if (std::count(assigned_indices.begin(), assigned_indices.end(), j)) {
           continue;
         }
 
-        std::vector<std::size_t> candidate_indices;
-        std::vector<double> x_values;
-        std::vector<double> y_values;
-        // auto x = std::get<0>(frequency_point.second.at(i));
-        // auto y = std::get<1>(frequency_point.second.at(i));
-        auto x = std::get<0>(frequency_points.at(i));
-        auto y = std::get<1>(frequency_points.at(i));
+        auto x_candidate = std::get<0>(frequency_points.at(j));
+        auto y_candidate = std::get<1>(frequency_points.at(j));
 
-        std::size_t counts = 0;
-        // Going through all the remaining points which are in the frequency range
-        // for the candidate points
-        // for (std::size_t j = i + 1; j < frequency_point.second.size(); ++j) {
-        for (std::size_t j = i + 1; j < frequency_points.size(); ++j) {
-          // Skip if the point was already assigned to a cluster
-          if (std::count(assigned_indices.begin(), assigned_indices.end(), j)) {
-            continue;
-          }
-
-          // auto x_candidate = std::get<0>(frequency_point.second.at(j));
-          // auto y_candidate = std::get<1>(frequency_point.second.at(j));
-          auto x_candidate = std::get<0>(frequency_points.at(j));
-          auto y_candidate = std::get<1>(frequency_points.at(j));
-
-          // Make sure that points in the same cluster are close
-          // double distance = 10;
-          double distance = 8;
-          if ((std::fabs(x - x_candidate) < distance) && (std::fabs(y - y_candidate) < distance)) {
-            candidate_indices.emplace_back(j);
-            x_values.emplace_back(x_candidate);
-            y_values.emplace_back(y_candidate);
-            counts++;
-          }
-        }
-
-        // We want a certain amount of points for a cluster
-        if (10 < counts) {
-          candidate_indices.emplace_back(i);
-          x_values.emplace_back(x);
-          y_values.emplace_back(y);
-
-          // Calculate mean position of the cluster
-          auto mean_x = std::reduce(x_values.begin(), x_values.end());
-          mean_x /= x_values.size();
-          auto mean_y = std::reduce(y_values.begin(), y_values.end());
-          mean_y /= y_values.size();
-
-          // Centroid via Moments
-          // double m00 = 0.0;
-          // double m10 = 0.0;
-          // double m01 = 0.0;
-          // for (std::size_t x_i = 0; x_i < x_values.size(); ++x_i) {
-          //   for (std::size_t y_i = 0; y_i < y_values.size(); ++y_i) {
-          //      m00 += 1.0; 
-          //      m10 += x_values.at(x_i); 
-          //      m01 += y_values.at(y_i); 
-          //   }
-          // }
-          // std::cout << "Mean x: " << mean_x << ", y: " << mean_y << std::endl;
-          // mean_x = m10 / m00;
-          // mean_y = m01 / m00;
-          // std::cout << "Centroid x: " << mean_x << ", y: " << mean_y << std::endl;
-
-          bool insert = true;
-          for (const auto & point : filtered_frequency_points) {
-            x = std::get<0>(point);
-            y = std::get<1>(point);
-
-            // Do not add cluster if its mean position is close to an already added
-            // cluster
-            // double cluster_distance = 20;
-            double cluster_distance = 15;
-            if ((std::fabs(x - mean_x) < cluster_distance) && (std::fabs(y - mean_y) < cluster_distance)) {
-              insert = false;
-              break;
-            }
-          }
-          if (insert) {
-            // filtered_frequency_points.emplace_back(mean_x, mean_y, frequency_point.first);
-            filtered_frequency_points.emplace_back(mean_x, mean_y, 750);
-            number_of_points.emplace_back(x_values.size());
-          }
-
-          assigned_indices.insert(
-            assigned_indices.end(), candidate_indices.begin(), candidate_indices.end());
+        // Make sure that points in the same cluster are close
+        // double distance = 10;
+        double distance = 8;
+        if ((std::fabs(x - x_candidate) < distance) && (std::fabs(y - y_candidate) < distance)) {
+          candidate_indices.emplace_back(j);
+          x_values.emplace_back(x_candidate);
+          y_values.emplace_back(y_candidate);
+          counts++;
         }
       }
-    // }
+
+      // We want a certain amount of points for a cluster
+      if (10 < counts) {
+        candidate_indices.emplace_back(i);
+        x_values.emplace_back(x);
+        y_values.emplace_back(y);
+
+        // Calculate mean position of the cluster
+        auto mean_x = std::reduce(x_values.begin(), x_values.end());
+        mean_x /= x_values.size();
+        auto mean_y = std::reduce(y_values.begin(), y_values.end());
+        mean_y /= y_values.size();
+
+        // Centroid via Moments
+        // double m00 = 0.0;
+        // double m10 = 0.0;
+        // double m01 = 0.0;
+        // for (std::size_t x_i = 0; x_i < x_values.size(); ++x_i) {
+        //   for (std::size_t y_i = 0; y_i < y_values.size(); ++y_i) {
+        //      m00 += 1.0; 
+        //      m10 += x_values.at(x_i); 
+        //      m01 += y_values.at(y_i); 
+        //   }
+        // }
+        // std::cout << "Mean x: " << mean_x << ", y: " << mean_y << std::endl;
+        // mean_x = m10 / m00;
+        // mean_y = m01 / m00;
+        // std::cout << "Centroid x: " << mean_x << ", y: " << mean_y << std::endl;
+
+        bool insert = true;
+        for (const auto & point : filtered_frequency_points) {
+          x = std::get<0>(point);
+          y = std::get<1>(point);
+
+          // Do not add cluster if its mean position is close to an already added
+          // cluster
+          // double cluster_distance = 20;
+          double cluster_distance = 15;
+          if ((std::fabs(x - mean_x) < cluster_distance) && (std::fabs(y - mean_y) < cluster_distance)) {
+            insert = false;
+            break;
+          }
+        }
+        if (insert) {
+          // filtered_frequency_points.emplace_back(mean_x, mean_y, frequency_point.first);
+          filtered_frequency_points.emplace_back(mean_x, mean_y, 750);
+          number_of_points.emplace_back(x_values.size());
+        }
+
+        assigned_indices.insert(
+          assigned_indices.end(), candidate_indices.begin(), candidate_indices.end());
+      }
+    }
 
     // Only proceed if we detected three clusters (three markers)
     // if (!filtered_frequency_points.empty()) {
