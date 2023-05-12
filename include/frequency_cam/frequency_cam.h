@@ -278,7 +278,9 @@ private:
               // Only add points which are in our frequency range
               // (frequency > min_range_1 && frequency < max_range_1) ||
               (frequency > min_range_2 && frequency < max_range_2)) {
-              frequency = roundUp(frequency, 250);
+              // frequency = roundUp(frequency, 250);
+              // frequency = roundUp(frequency, 100);
+              frequency = roundUp(frequency, 50);
               if (1 == frequency_points.count(frequency)) {
                 frequency_points[frequency].emplace_back(ix, iy);
               } else {
@@ -325,7 +327,9 @@ private:
           auto y_candidate = std::get<1>(frequency_point.second.at(j));
 
           // Make sure that points in the same cluster are close
-          if ((std::fabs(x - x_candidate) < 20) && (std::fabs(y - y_candidate) < 20)) {
+          // double distance = 10;
+          double distance = 8;
+          if ((std::fabs(x - x_candidate) < distance) && (std::fabs(y - y_candidate) < distance)) {
             candidate_indices.emplace_back(j);
             x_values.emplace_back(x_candidate);
             y_values.emplace_back(y_candidate);
@@ -368,7 +372,8 @@ private:
 
             // Do not add cluster if its mean position is close to an already added
             // cluster
-            double cluster_distance = 20;
+            // double cluster_distance = 20;
+            double cluster_distance = 15;
             if ((std::fabs(x - mean_x) < cluster_distance) && (std::fabs(y - mean_y) < cluster_distance)) {
               insert = false;
               break;
