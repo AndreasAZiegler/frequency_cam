@@ -57,6 +57,7 @@ private:
   event_camera_codecs::DecoderFactory<EventPacket, FrequencyCam> decoderFactory_;
   std_msgs::msg::Header header_;
   std::queue<uint64_t> frameTimes_;
+  bool useFrameTimes_;
 
   uint32_t width_{0};          // image width
   uint32_t height_{0};         // image height

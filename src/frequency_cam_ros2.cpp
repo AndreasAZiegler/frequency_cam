@@ -35,7 +35,7 @@ namespace frequency_cam
 using EventPacket = event_camera_msgs::msg::EventPacket;
 
 FrequencyCamROS::FrequencyCamROS(const rclcpp::NodeOptions & options)
-: Node("frequency_cam", options)
+: Node("frequency_cam", options), useFrameTimes_(false)
 {
   if (!initialize()) {
     RCLCPP_ERROR(get_logger(), "frequency cam startup failed!");
@@ -103,6 +103,7 @@ void FrequencyCamROS::readFrameTimes()
 {
   const std::string fname = this->declare_parameter<std::string>("frame_time_file", "");
   if (!fname.empty()) {
+    useFrameTimes_ = true;
     std::ifstream file(fname);
     if (!file.is_open()) {
       RCLCPP_ERROR_STREAM(this->get_logger(), "cannot open frame time file: " << fname);
@@ -167,8 +168,12 @@ void FrequencyCamROS::playEventsFromBag(const std::string & bagName, const std::
       // loop will exit when all events in message have been processed
       while (decoder->decodeUntil(*msg, &cam_, currentFrameTime, &nextTime)) {
         if (frameTimes_.empty()) {  // free running mode
-          for (; currentFrameTime <= nextTime; currentFrameTime += delta_t) {
-            makeAndWriteFrame(currentFrameTime, path, frameCount++);
+          if (!useFrameTimes_) { // Only generate frames if frame times are not used
+            for (; currentFrameTime <= nextTime; currentFrameTime += delta_t) {
+              makeAndWriteFrame(currentFrameTime, path, frameCount++);
+            }
+          } else { // Ugly hack to finish decoding if the are remaining events but not frame times
+            for (; currentFrameTime <= nextTime; currentFrameTime += delta_t) {}
           }
         } else {
           // use loop in case multiple frames fit inbetween two events
