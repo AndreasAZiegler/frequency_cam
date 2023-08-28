@@ -16,7 +16,7 @@
 #ifndef FREQUENCY_CAM__FREQUENCY_CAM_H_
 #define FREQUENCY_CAM__FREQUENCY_CAM_H_
 
-#include <event_array_codecs/event_processor.h>
+#include <event_camera_codecs/event_processor.h>
 
 #include <atomic>
 #include <cstdint>
@@ -36,7 +36,7 @@ namespace frequency_cam
 
 int roundUp(const int numToRound, const int multiple);
 
-class FrequencyCam : public event_array_codecs::EventProcessor
+class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
   FrequencyCam() : csv_file_("frequency_points.csv") {}
@@ -109,8 +109,8 @@ public:
   void initializeState(uint32_t width, uint32_t height, uint64_t t_first, uint64_t t_off);
 
   // returns frequency image
-  std::optional<std::vector<cv::Mat>> makeFrequencyAndEventImage(
-    cv::Mat * eventImage, bool overlayEvents, bool useLogFrequency, float dt);
+  cv::Mat makeFrequencyAndEventImage(
+    cv::Mat * eventImage, bool overlayEvents, bool useLogFrequency, float dt, uint64_t trigger_timestamp = 0);
 
   void getStatistics(size_t * numEvents) const;
   void resetStatistics();
@@ -131,6 +131,14 @@ private:
     bool polarity;
   };
   friend std::ostream & operator<<(std::ostream & os, const Event & e);
+
+  struct Point
+  {
+    explicit Point(int xi = 0, int yi = 0)
+    : x(xi), y(yi) {}
+    int x;
+    int y;
+  };
 
   // define the per-pixel filter state
   typedef float variable_t;
@@ -250,14 +258,14 @@ private:
   template <class T, class U>
   cv::Mat makeTransformedFrequencyImage(cv::Mat * eventFrame, float eventImageDt, uint64_t trigger_timestamp)
   {
-    std::vector<std::tuple<int, int>> frequency_points;
+    std::vector<Point> frequency_points;
 
     // const int min_range_1 = 2800;
     // const int max_range_1 = 3200;
     // const int min_range_2 = 3800;
     // const int max_range_2 = 4200;
-    const int min_range_2 = 500;
-    const int max_range_2 = 1000;
+    const int min_range = 500;
+    const int max_range = 1000;
     cv::Mat rawImg(height_, width_, CV_32FC1, 0.0);
     const double maxDt = 1.0 / freq_[0] * timeoutCycles_;
     const double minFreq = T::tf(freq_[0]);
@@ -277,7 +285,7 @@ private:
             auto frequency = std::max(T::tf(f), minFreq);
             if (
               // Only add points which are in our frequency range
-              (frequency > min_range_2 && frequency < max_range_2)) {
+              (frequency > min_range && frequency < max_range)) {
               frequency_points.emplace_back(ix, iy);
             }
             rawImg.at<float>(iy, ix) = frequency;
@@ -288,7 +296,7 @@ private:
       }
     }
 
-    std::vector<std::tuple<double, double, double>> filtered_frequency_points;
+    std::vector<Point> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
     std::vector<std::size_t> assigned_indices;
     // Going through all the points which are in the frequency range
@@ -302,8 +310,8 @@ private:
       std::vector<std::size_t> candidate_indices;
       std::vector<double> x_values;
       std::vector<double> y_values;
-      auto x = std::get<0>(frequency_points.at(i));
-      auto y = std::get<1>(frequency_points.at(i));
+      auto x = frequency_points.at(i).x;
+      auto y = frequency_points.at(i).y;
 
       std::size_t counts = 0;
       // Going through all the remaining points which are in the frequency range
@@ -314,8 +322,8 @@ private:
           continue;
         }
 
-        auto x_candidate = std::get<0>(frequency_points.at(j));
-        auto y_candidate = std::get<1>(frequency_points.at(j));
+        auto x_candidate = frequency_points.at(j).x;
+        auto y_candidate = frequency_points.at(j).y;
 
         // Make sure that points in the same cluster are close
         // double distance = 10;
@@ -358,8 +366,8 @@ private:
 
         bool insert = true;
         for (const auto & point : filtered_frequency_points) {
-          x = std::get<0>(point);
-          y = std::get<1>(point);
+          x = point.x;
+          y = point.y;
 
           // Do not add cluster if its mean position is close to an already added
           // cluster
@@ -372,7 +380,7 @@ private:
         }
         if (insert) {
           // filtered_frequency_points.emplace_back(mean_x, mean_y, frequency_point.first);
-          filtered_frequency_points.emplace_back(mean_x, mean_y, 750);
+          filtered_frequency_points.emplace_back(mean_x, mean_y);
           number_of_points.emplace_back(x_values.size());
         }
 
@@ -431,8 +439,8 @@ private:
         //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
         //           << ", number of points: " << number_of_points.at(i) << std::endl;
         // auto frequency = std::get<0>(filtered_frequency_points.at(i));
-        csv_file_ << ";" << std::get<0>(filtered_frequency_points.at(i)) << ";"
-                  << std::get<1>(filtered_frequency_points.at(i));
+        csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
+                  << filtered_frequency_points.at(i).y;
 
         // Visualize detected markers with circles
         double color_level = 0;
@@ -445,8 +453,8 @@ private:
         }
         cv::circle(
           rawImg,
-          {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
-           static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
+          {static_cast<int>(filtered_frequency_points.at(i).x),
+           static_cast<int>(filtered_frequency_points.at(i).y)},
           // 2, CV_RGB(550, 550, 550), 4);
           12, CV_RGB(color_level, color_level, color_level), 6);
            //    cv::putText(rawImg, std::to_string(i),
@@ -466,16 +474,16 @@ private:
       cv::putText(rawImg, "dist_1_2: " + std::to_string(dist_1_2), {50, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "dist_0_2: " + std::to_string(dist_0_2), {50, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
 
-      auto p1x = std::get<0>(filtered_frequency_points.at(0));
-      auto p1y = std::get<1>(filtered_frequency_points.at(0));
+      auto p1x = filtered_frequency_points.at(0).x;
+      auto p1y = filtered_frequency_points.at(0).y;
       cv::putText(rawImg, "p0: x: " + std::to_string(p1x), {1000, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "p0: y: " + std::to_string(p1y), {1000, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      auto p2x = std::get<0>(filtered_frequency_points.at(1));
-      auto p2y = std::get<1>(filtered_frequency_points.at(1));
+      auto p2x = filtered_frequency_points.at(1).x;
+      auto p2y = filtered_frequency_points.at(1).y;
       cv::putText(rawImg, "p1: x: " + std::to_string(p2x), {1000, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "p1: y: " + std::to_string(p2y), {1000, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      auto p3x = std::get<0>(filtered_frequency_points.at(2));
-      auto p3y = std::get<1>(filtered_frequency_points.at(2));
+      auto p3x = filtered_frequency_points.at(2).x;
+      auto p3y = filtered_frequency_points.at(2).y;
       cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
 
@@ -495,7 +503,7 @@ private:
     return (static_cast<uint32_t>((t / 1000) & 0xFFFFFFFF));
   }
 
-  void sort3Kp(std::vector<std::tuple<double, double, double>>& kp, int& idx_min, int& idx_max, double& dist_0_1, double& dist_1_2, double& dist_0_2);
+  void sort3Kp(std::vector<Point>& kp, int& idx_min, int& idx_max, double& dist_0_1, double& dist_1_2, double& dist_0_2);
 
   // ------ variables ----
   State * state_{0};

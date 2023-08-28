@@ -47,7 +47,8 @@ def launch_setup(context, *args, **kwargs):
              'overlay_events': True,
              #'bag_file': LaunchConfig('bag').perform(context),
              'bag_file': '2023-03-08-wand_1-dvs2',
-             'trigger_file': 'triggers.txt',
+             # 'frame_time_file': LaunchConfig('frame_time_file').perform(context),
+             'frame_time_file': 'triggers.txt',
              'publishing_frequency': 25.0}],
         remappings=[
             ('~/events', event_topic),
@@ -65,6 +66,8 @@ def generate_launch_description():
                   description='image topic'),
         LaunchArg('event_topic', default_value=['/event_camera/events'],
                   description='event topic'),
+        LaunchArg('frame_time_file', default_value=[''],
+                  description='file with frame times (sensor time in nanosec)'),
         LaunchArg('bag', default_value=[''],
                   description='name of bag file to read'),
         LaunchArg('use_sim_time', default_value=['false'],
