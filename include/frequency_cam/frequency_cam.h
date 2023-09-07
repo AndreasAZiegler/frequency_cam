@@ -27,6 +27,7 @@
 #include <optional>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <eigen3/Eigen/Dense>
 
 // #define DEBUG
@@ -39,7 +40,7 @@ int roundUp(const int numToRound, const int multiple);
 class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
-  FrequencyCam() : csv_file_("frequency_points.csv") {}
+  FrequencyCam() : csv_file_("frequency_points.csv"), debug_image_counter_(0) {}
   ~FrequencyCam();
 
   FrequencyCam(const FrequencyCam &) = delete;
@@ -264,8 +265,8 @@ private:
     // const int max_range_1 = 3200;
     // const int min_range_2 = 3800;
     // const int max_range_2 = 4200;
-    const int min_range = 500;
-    const int max_range = 1000;
+    const int min_range = 200;
+    const int max_range = 800;
     cv::Mat rawImg(height_, width_, CV_32FC1, 0.0);
     const double maxDt = 1.0 / freq_[0] * timeoutCycles_;
     const double minFreq = T::tf(freq_[0]);
@@ -283,10 +284,11 @@ private:
           // filter out any pixels that have not been updated recently
           if (dt < maxDt * timeoutCycles_ && dt * f < timeoutCycles_) {
             auto frequency = std::max(T::tf(f), minFreq);
-            if (
-              // Only add points which are in our frequency range
-              (frequency > min_range && frequency < max_range)) {
+            // Only add points which are in our frequency range
+            if (frequency > min_range && frequency < max_range) {
               frequency_points.emplace_back(ix, iy);
+              // rawImg.at<float>(iy, ix) = frequency;
+              // rawImg.at<float>(iy, ix) = std::numeric_limits<long int>::max();
             }
             rawImg.at<float>(iy, ix) = frequency;
           } else {
@@ -296,6 +298,40 @@ private:
       }
     }
 
+    // cv::Mat gray(height_, width_, CV_8SC1);
+    cv::Mat gray(height_, width_, CV_8UC1);
+    rawImg.convertTo(gray, CV_8UC1);
+    std::string file_name = "debug_frames/debug_" + std::to_string(debug_image_counter_) + ".png";
+    cv::imwrite(file_name, gray);
+    debug_image_counter_++;
+    std::vector<cv::Vec3f> circles;
+    // std::cerr << "rawImg.type(): " << rawImg.type() << std::endl;
+    // std::cerr << "gray.type(): " << gray.type() << std::endl;
+    // double minVal;
+    // double maxVal;
+    // cv::Point minLoc;
+    // cv::Point maxLoc;
+    // cv::minMaxLoc(rawImg, &minVal, &maxVal, &minLoc, &maxLoc);
+    // std::cout << "rawImg: min val: " << minVal << ", max val: " << maxVal << std::endl;
+    // cv::minMaxLoc(gray, &minVal, &maxVal, &minLoc, &maxLoc);
+    // std::cout << "gray: min val: " << minVal << ", max val: " << maxVal << std::endl;
+    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1, 10, 1, 4, 0, 10);
+    if (circles.size() == 3) {
+      for (std::size_t i = 0; i < circles.size(); ++i) {
+        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        int radius = cvRound(circles[i][2]);
+        // draw the circle center
+        // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
+        cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
+        // draw the circle outline
+        cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
+      }
+      cv::putText(rawImg, "Nr. of circles: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+    } else {
+      // std::cerr << "Nr. of circles: " << circles.size() << std::endl;
+    }
+
+    /*
     std::vector<Point> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
     std::vector<std::size_t> assigned_indices;
@@ -493,6 +529,7 @@ private:
       csv_file_ << trigger_timestamp;
       csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
     }
+    */
 
     cv::putText(rawImg, "time stamp: " + std::to_string(trigger_timestamp), {800, 600}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
     return (rawImg);
@@ -541,6 +578,8 @@ private:
   uint64_t lastEventTimeNs_;
   bool initialize_time_stamps_{false};
   bool fix_time_stamps_{false}; 
+
+  std::size_t debug_image_counter_;
 };
 std::ostream & operator<<(std::ostream & os, const FrequencyCam::Event & e);
 }  // namespace frequency_cam
