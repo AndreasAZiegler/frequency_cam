@@ -110,6 +110,15 @@ void FrequencyCam::initializeState(uint32_t width, uint32_t height, uint64_t t_f
   (void)t_off;
 #endif
 
+  for (std::size_t i = 0; i < width; ++i) {
+    x_updates_.emplace_back(false);
+  }
+  std::cerr << "x_updates_.size(): " << x_updates_.size() << std::endl;
+  for (std::size_t i = 0; i < height; ++i) {
+    y_updates_.emplace_back(false);
+  }
+  std::cerr << "y_updates_.size(): " << y_updates_.size() << std::endl;
+
   width_ = width;
   height_ = height;
   state_ = new State[width * height];

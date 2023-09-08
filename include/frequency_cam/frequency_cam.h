@@ -40,7 +40,8 @@ int roundUp(const int numToRound, const int multiple);
 class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
-  FrequencyCam() : csv_file_("frequency_points.csv"), debug_image_counter_(0) {}
+  FrequencyCam() : csv_file_("frequency_points.csv"), debug_image_counter_(0) {
+  }
   ~FrequencyCam();
 
   FrequencyCam(const FrequencyCam &) = delete;
@@ -54,12 +55,16 @@ public:
       initialize_time_stamps_ = true;
       if (sensor_time > 15000000000) {
         fix_time_stamps_ = true;
+        std::cerr << "Time stamp needs to be fixed!" << std::endl;
+      } else {
+        std::cerr << "Time stamp seems fine!" << std::endl;
       }
     }
     if (fix_time_stamps_) {
       sensor_time -= 16777215000;
     }
     // std::cout << "Event: time stamp: " << sensor_time << std::endl;
+    // std::cerr << "ex: " << ex << ", ey: " << ey << ", time: " << shorten_time(sensor_time) << std::endl;
     Event e(shorten_time(sensor_time), ex, ey, polarity);
     updateState(&state_[e.y * width_ + e.x], e);
     lastEventTime_ = e.t;
@@ -226,6 +231,11 @@ private:
              << " " << dt << " " << s.period << " " << dtMin_ << " " << dtMax_ << std::endl;
     }
 #endif
+    if (s.period > 0) {
+      // std::cerr << "e.x: " << e.x << ", e.y: " << e.y << ", s.period: " << s.period << std::endl;
+      x_updates_.at(e.x) = true;
+      y_updates_.at(e.y) = true;
+    }
     s.L_km2 = s.L_km1;
     s.L_km1 = L_k;
     s.set_time_and_polarity(e.t, e.polarity);
@@ -277,16 +287,22 @@ private:
         // compute time since last touched
         const double dtEvent = (lastEventTime_ - state.lastTime()) * 1e-6;
         U::update(eventFrame, ix, iy, dtEvent, eventImageDt);
+        if (x_updates_.at(ix) && y_updates_.at(iy)) {
+          std::cerr << "ix: " << ix << ", iy: " << iy << ", state.period: " << state.period << std::endl;
+        }
         if (state.period > 0) {
+          std::cerr << "state.period > 0" << std::endl;
           const double dt =
             (lastEventTime_ - std::max(state.t_flip_up_down, state.t_flip_down_up)) * 1e-6;
           const double f = 1.0 / std::max(state.period, decltype(state.period)(1e-6));
           // filter out any pixels that have not been updated recently
           if (dt < maxDt * timeoutCycles_ && dt * f < timeoutCycles_) {
+            std::cerr << "Event within time range" << std::endl;
             auto frequency = std::max(T::tf(f), minFreq);
             // Only add points which are in our frequency range
             if (frequency > min_range && frequency < max_range) {
               frequency_points.emplace_back(ix, iy);
+              std::cerr << "Event within frequency range" << std::endl;
               // rawImg.at<float>(iy, ix) = frequency;
               // rawImg.at<float>(iy, ix) = std::numeric_limits<long int>::max();
             }
@@ -580,6 +596,8 @@ private:
   bool fix_time_stamps_{false}; 
 
   std::size_t debug_image_counter_;
+  std::vector<int> x_updates_;
+  std::vector<int> y_updates_;
 };
 std::ostream & operator<<(std::ostream & os, const FrequencyCam::Event & e);
 }  // namespace frequency_cam
