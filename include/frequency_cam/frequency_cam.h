@@ -439,90 +439,90 @@ private:
       // std::cout << "x1: " << std::get<0>(filtered_frequency_points.at(0)) << std::endl;
       // std::cout << "y1 : " << std::get<1>(filtered_frequency_points.at(0)) << std::endl;
       // std::cout << "x2: " << std::get<0>(filtered_frequency_points.at(1)) << std::endl;
-      // std::cout << "y2 : " << std::get<1>(filtered_frequency_points.at(1)) << std::endl;
-      // std::cout << "x3: " << std::get<0>(filtered_frequency_points.at(2)) << std::endl;
-      // std::cout << "y3 : " << std::get<1>(filtered_frequency_points.at(2)) << std::endl;
-      // std::cout << "term 1: " << term_1 << ", term 2: " << term_2 << ", term_3: " << term_3 << std::endl;
-      // std::cout << "residual: " << std::fabs(residual) << std::endl;
+        // std::cout << "y2 : " << std::get<1>(filtered_frequency_points.at(1)) << std::endl;
+        // std::cout << "x3: " << std::get<0>(filtered_frequency_points.at(2)) << std::endl;
+        // std::cout << "y3 : " << std::get<1>(filtered_frequency_points.at(2)) << std::endl;
+        // std::cout << "term 1: " << term_1 << ", term 2: " << term_2 << ", term_3: " << term_3 << std::endl;
+        // std::cout << "residual: " << std::fabs(residual) << std::endl;
 
 
-      // Line constraint from https://stackoverflow.com/questions/28619791/how-do-i-check-to-see-if-three-points-form-a-straight-line
-      // Eigen::Matrix3f matrix;
-      // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
-      //           std::get<0>(filtered_frequency_points.at(1)), std::get<1>(filtered_frequency_points.at(1)), 1.0,
-      //           std::get<0>(filtered_frequency_points.at(2)), std::get<1>(filtered_frequency_points.at(2)), 1.0;
-      // Eigen::FullPivLU<Eigen::Matrix3f> lu_decomp(matrix);
-      // auto rank = lu_decomp.rank();
-      // std::cout << "Rank: " << rank << std::endl;
-      // // result = rank([x2-x1, y2-y1; x3-x1, y3-y1]) < 2;
+        // Line constraint from https://stackoverflow.com/questions/28619791/how-do-i-check-to-see-if-three-points-form-a-straight-line
+        // Eigen::Matrix3f matrix;
+        // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
+        //           std::get<0>(filtered_frequency_points.at(1)), std::get<1>(filtered_frequency_points.at(1)), 1.0,
+        //           std::get<0>(filtered_frequency_points.at(2)), std::get<1>(filtered_frequency_points.at(2)), 1.0;
+        // Eigen::FullPivLU<Eigen::Matrix3f> lu_decomp(matrix);
+        // auto rank = lu_decomp.rank();
+        // std::cout << "Rank: " << rank << std::endl;
+        // // result = rank([x2-x1, y2-y1; x3-x1, y3-y1]) < 2;
 
-      // std::cout << "Filtered points:" << std::endl;
-      // std::cout << "time stamp: " << lastEventTime_ << std::endl;
-      //for (const auto & filtered_point : filtered_points) {
+        // std::cout << "Filtered points:" << std::endl;
+        // std::cout << "time stamp: " << lastEventTime_ << std::endl;
+        //for (const auto & filtered_point : filtered_points) {
 
-      // Write to csv file
-      csv_file_ << trigger_timestamp;
-      for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
-        // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
-        //           << ", y: " << std::get<1>(filtered_frequency_points.at(i))
-        //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
-        //           << ", number of points: " << number_of_points.at(i) << std::endl;
-        // auto frequency = std::get<0>(filtered_frequency_points.at(i));
-        csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
-                  << filtered_frequency_points.at(i).y;
+        // Write to csv file
+        csv_file_ << trigger_timestamp;
+        for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
+          // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
+          //           << ", y: " << std::get<1>(filtered_frequency_points.at(i))
+          //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
+          //           << ", number of points: " << number_of_points.at(i) << std::endl;
+          // auto frequency = std::get<0>(filtered_frequency_points.at(i));
+          csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
+                    << filtered_frequency_points.at(i).y;
 
-        // Visualize detected markers with circles
-        double color_level = 0;
-        if (i == 0) {
-          color_level = 1000;
-        } else if (i == 1) {
-          color_level = 800;
-        } else if (i == 2) {
-          color_level = 600;
+          // Visualize detected markers with circles
+          double color_level = 0;
+          if (i == 0) {
+            color_level = 1000;
+          } else if (i == 1) {
+            color_level = 800;
+          } else if (i == 2) {
+            color_level = 600;
+          }
+          cv::circle(
+            rawImg,
+            {static_cast<int>(filtered_frequency_points.at(i).x),
+             static_cast<int>(filtered_frequency_points.at(i).y)},
+            // 2, CV_RGB(550, 550, 550), 4);
+            12, CV_RGB(color_level, color_level, color_level), 6);
+             //    cv::putText(rawImg, std::to_string(i),
+             //                {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
+             //                 static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
+             //                cv::FONT_HERSHEY_SIMPLEX,
+             //                2,
+             //                550,
+             //                4);
         }
-        cv::circle(
-          rawImg,
-          {static_cast<int>(filtered_frequency_points.at(i).x),
-           static_cast<int>(filtered_frequency_points.at(i).y)},
-          // 2, CV_RGB(550, 550, 550), 4);
-          12, CV_RGB(color_level, color_level, color_level), 6);
-           //    cv::putText(rawImg, std::to_string(i),
-           //                {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
-           //                 static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
-           //                cv::FONT_HERSHEY_SIMPLEX,
-           //                2,
-           //                550,
-           //                4);
+        csv_file_ << "\n";
+
+        // Add debug information to frame
+        cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "dist_1_2: " + std::to_string(dist_1_2), {50, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "dist_0_2: " + std::to_string(dist_0_2), {50, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+
+        auto p1x = filtered_frequency_points.at(0).x;
+        auto p1y = filtered_frequency_points.at(0).y;
+        cv::putText(rawImg, "p0: x: " + std::to_string(p1x), {1000, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "p0: y: " + std::to_string(p1y), {1000, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        auto p2x = filtered_frequency_points.at(1).x;
+        auto p2y = filtered_frequency_points.at(1).y;
+        cv::putText(rawImg, "p1: x: " + std::to_string(p2x), {1000, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "p1: y: " + std::to_string(p2y), {1000, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        auto p3x = filtered_frequency_points.at(2).x;
+        auto p3y = filtered_frequency_points.at(2).y;
+        cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+        cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+
+        nrDetectedWands_++;
+      } else {
+        // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
+        csv_file_ << trigger_timestamp;
+        csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
       }
-      csv_file_ << "\n";
-
-      // Add debug information to frame
-      cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "dist_1_2: " + std::to_string(dist_1_2), {50, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "dist_0_2: " + std::to_string(dist_0_2), {50, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-
-      auto p1x = filtered_frequency_points.at(0).x;
-      auto p1y = filtered_frequency_points.at(0).y;
-      cv::putText(rawImg, "p0: x: " + std::to_string(p1x), {1000, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "p0: y: " + std::to_string(p1y), {1000, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      auto p2x = filtered_frequency_points.at(1).x;
-      auto p2y = filtered_frequency_points.at(1).y;
-      cv::putText(rawImg, "p1: x: " + std::to_string(p2x), {1000, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "p1: y: " + std::to_string(p2y), {1000, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      auto p3x = filtered_frequency_points.at(2).x;
-      auto p3y = filtered_frequency_points.at(2).y;
-      cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-      cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-
-      nrDetectedWands_++;
-    } else {
-      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
-      csv_file_ << trigger_timestamp;
-      csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
-    }
-    */
+      */
 
     cv::putText(rawImg, "time stamp: " + std::to_string(trigger_timestamp), {800, 600}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
     return (rawImg);
