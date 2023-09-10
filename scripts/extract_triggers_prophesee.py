@@ -44,7 +44,7 @@ def get_reconstruction_timestamps(time: np.ndarray, pol: np.ndarray, trigger_sou
         timestamps = time[pol==1]
         timestamps = timestamps + time_offset_us
 
-    return timestamps
+    return timestamps * 1e3
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Read trigger data from prophesee raw file')
