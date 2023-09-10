@@ -27,16 +27,16 @@ for filename in os.listdir(directory):
         params.minArea = 20
          
         # Filter by Circularity
-        params.filterByCircularity = True
+        params.filterByCircularity = False
         params.minCircularity = 0.7
          
         # Filter by Convexity
-        params.filterByConvexity = True
-        params.minConvexity = 0.9
+        params.filterByConvexity = False
+        params.minConvexity = 0.5
          
         # Filter by Inertia
-        params.filterByInertia = True
-        params.minInertiaRatio = 0.7
+        params.filterByInertia = False
+        params.minInertiaRatio = 0.5
 
         params.minDistBetweenBlobs = 10
 
@@ -51,7 +51,7 @@ for filename in os.listdir(directory):
          
         # print("Nur. of circles: " + str(len(circles)))
 
-        if len(keypoints) == 3:
+        if len(keypoints) != 0:
             # Draw detected blobs as red circles.
             # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
             # image = cv.drawKeypoints(image, keypoints, np.array([]), (0, 0, 255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
