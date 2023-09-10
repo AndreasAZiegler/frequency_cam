@@ -28,6 +28,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/features2d.hpp>
 #include <eigen3/Eigen/Dense>
 
 // #define DEBUG
@@ -39,6 +40,31 @@ class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
   FrequencyCam() : csv_file_("frequency_points.csv"), debug_image_counter_(0) {
+    // Change thresholds
+    blob_detector_params_.minThreshold = 200;
+    blob_detector_params_.maxThreshold = 260;
+     
+    // Filter by Area.
+    blob_detector_params_.filterByArea = true;
+    blob_detector_params_.minArea = 20;
+     
+    // Filter by Circularity
+    blob_detector_params_.filterByCircularity = false;
+    blob_detector_params_.minCircularity = 0.7;
+     
+    // Filter by Convexity
+    blob_detector_params_.filterByConvexity = false;
+    blob_detector_params_.minConvexity = 0.5;
+     
+    // Filter by Inertia
+    blob_detector_params_.filterByInertia = false;
+    blob_detector_params_.minInertiaRatio = 0.5;
+
+    blob_detector_params_.minDistBetweenBlobs = 10;
+
+    blob_detector_params_.blobColor = 255;
+
+    blob_detector_ = cv::SimpleBlobDetector::create(blob_detector_params_);
   }
   ~FrequencyCam();
 
@@ -308,6 +334,8 @@ private:
     std::string file_name = "debug_frames/debug_" + std::to_string(debug_image_counter_) + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
+
+    // Hough circle detection
     std::vector<cv::Vec3f> circles;
     cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1/*dp*/, 20/*minDist*/, 10/*param1*/, 8/*param2*/, 0, 10);
     for (std::size_t i = 0; i < circles.size(); ++i) {
@@ -323,6 +351,11 @@ private:
     if (circles.size() > 3) {
       std::cerr << "trigger_timestamp: " << trigger_timestamp << ", circles.size(): " << circles.size() << std::endl;
     }
+
+    std::vector<cv::KeyPoint> keypoints;
+    blob_detector_->detect(gray, keypoints);
+
+    cv::drawKeypoints(rawImg, keypoints, rawImg, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
     /*
     std::vector<Point> filtered_frequency_points;
@@ -569,6 +602,9 @@ private:
   std::vector<uint64_t> externalTriggers_;
   bool initialize_time_stamps_{false};
   bool fix_time_stamps_{false}; 
+
+  cv::Ptr<cv::SimpleBlobDetector> blob_detector_;
+  cv::SimpleBlobDetector::Params blob_detector_params_;
 
   std::size_t debug_image_counter_;
   std::vector<int> x_updates_;
