@@ -303,40 +303,26 @@ private:
       }
     }
 
-    // cv::Mat gray(height_, width_, CV_8SC1);
     cv::Mat gray(height_, width_, CV_8UC1);
     rawImg.convertTo(gray, CV_8UC1);
     std::string file_name = "debug_frames/debug_" + std::to_string(debug_image_counter_) + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
-    /* 
     std::vector<cv::Vec3f> circles;
-    // std::cerr << "rawImg.type(): " << rawImg.type() << std::endl;
-    // std::cerr << "gray.type(): " << gray.type() << std::endl;
-    // double minVal;
-    // double maxVal;
-    // cv::Point minLoc;
-    // cv::Point maxLoc;
-    // cv::minMaxLoc(rawImg, &minVal, &maxVal, &minLoc, &maxLoc);
-    // std::cout << "rawImg: min val: " << minVal << ", max val: " << maxVal << std::endl;
-    // cv::minMaxLoc(gray, &minVal, &maxVal, &minLoc, &maxLoc);
-    // std::cout << "gray: min val: " << minVal << ", max val: " << maxVal << std::endl;
-    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1, 10, 1, 4, 0, 10);
-    if (circles.size() == 3) {
-      for (std::size_t i = 0; i < circles.size(); ++i) {
-        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
-        // draw the circle center
-        // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
-        cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
-        // draw the circle outline
-        cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
-      }
-      cv::putText(rawImg, "Nr. of circles: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-    } else {
-      // std::cerr << "Nr. of circles: " << circles.size() << std::endl;
+    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1/*dp*/, 20/*minDist*/, 10/*param1*/, 8/*param2*/, 0, 10);
+    for (std::size_t i = 0; i < circles.size(); ++i) {
+      cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+      int radius = cvRound(circles[i][2]);
+      // draw the circle center
+      // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
+      cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
+      // draw the circle outline
+      cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
     }
-    */
+    cv::putText(rawImg, "Nr. of circles: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+    if (circles.size() > 3) {
+      std::cerr << "trigger_timestamp: " << trigger_timestamp << ", circles.size(): " << circles.size() << std::endl;
+    }
 
     /*
     std::vector<Point> filtered_frequency_points;
