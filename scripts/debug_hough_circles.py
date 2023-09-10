@@ -14,7 +14,7 @@ for filename in os.listdir(directory):
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         # gray = cv.medianBlur(gray, 5)
 
-        circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1.0, 10, param1=1, param2=4, minRadius=0, maxRadius=10);
+        circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1.0, 10, param1=10, param2=8, minRadius=0, maxRadius=10);
 
         # print("Nur. of circles: " + str(len(circles)))
 
