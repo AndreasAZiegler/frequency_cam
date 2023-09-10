@@ -21,12 +21,6 @@
 #include <iomanip>
 #include <iostream>
 
-int64_t getDifference(uint64_t first, uint64_t second) {
-    uint64_t abs_diff = (first > second) ? (first - second): (second - first);
-    assert(abs_diff<=INT64_MAX);
-    return (first > second) ? static_cast<int64_t>(abs_diff) : -static_cast<int64_t>(abs_diff);
-}
-
 template <typename T, typename A> int arg_max(std::vector<T, A> const &vec) {
   return static_cast<int>(
       std::distance(vec.begin(), max_element(vec.begin(), vec.end())));
@@ -39,20 +33,6 @@ template <typename T, typename A> int arg_min(std::vector<T, A> const &vec) {
 
 namespace frequency_cam
 {
-
-int roundUp(const int numToRound, const int multiple)
-{
-    if (multiple == 0) {
-      return numToRound;
-    }
-
-    int remainder = numToRound % multiple;
-    if (remainder == 0) {
-      return numToRound;
-    }
-
-    return numToRound + multiple - remainder;
-}
 
 FrequencyCam::~FrequencyCam() {
   csv_file_.close();
@@ -152,25 +132,6 @@ cv::Mat FrequencyCam::makeFrequencyAndEventImage(
 void FrequencyCam::getStatistics(size_t * numEvents) const { *numEvents = eventCount_; }
 
 void FrequencyCam::resetStatistics() { eventCount_ = 0; }
-
-void FrequencyCam::setTriggers(const std::string & triggers_file) {
-  std::string line;
-  std::ifstream myfile;
-  myfile.open(triggers_file);
-
-  if(!myfile.is_open()) {
-    std::cerr << "Error opening trigger file" << std::endl;
-  }
-
-  while(getline(myfile, line)) {
-    uint64_t time_stamp = std::stoi(line);
-    externalTriggers_.emplace_back(time_stamp * 1000);
-  }
-  // for (const auto& element: externalTriggers_) {
-  //   std::cout << "Trigger time stamp: " << element << std::endl;
-  // }
-
-}
 
 // void FrequencyCam::sort3Kp(vector<cv::KeyPoint> &kp) {
 void FrequencyCam::sort3Kp(std::vector<Point>& kp, int& idx_min, int& idx_max, double& dist_0_1, double& dist_1_2, double& dist_0_2) {

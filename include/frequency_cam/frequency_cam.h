@@ -35,8 +35,6 @@
 namespace frequency_cam
 {
 
-int roundUp(const int numToRound, const int multiple);
-
 class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
@@ -50,6 +48,7 @@ public:
   // ------------- inherited from EventProcessor
   inline void eventCD(uint64_t sensor_time, uint16_t ex, uint16_t ey, uint8_t polarity) override
   {
+    /*
     // If the first time stamp is > 15s, there is an offset which we subtract every time.
     if (!initialize_time_stamps_) {
       initialize_time_stamps_ = true;
@@ -63,14 +62,13 @@ public:
     if (fix_time_stamps_) {
       sensor_time -= 16777215000;
     }
+    */
     // std::cout << "Event: time stamp: " << sensor_time << std::endl;
     // std::cerr << "ex: " << ex << ", ey: " << ey << ", time: " << shorten_time(sensor_time) << std::endl;
     Event e(shorten_time(sensor_time), ex, ey, polarity);
     updateState(&state_[e.y * width_ + e.x], e);
     lastEventTime_ = e.t;
-    lastEventTimeNs_ = sensor_time;
     eventCount_++;
-    eventTimesNs_.emplace_back(sensor_time);
   }
   void eventExtTrigger(uint64_t sensor_time, uint8_t edge, uint8_t /*id*/) override
   {
@@ -320,6 +318,7 @@ private:
     std::string file_name = "debug_frames/debug_" + std::to_string(debug_image_counter_) + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
+    /* 
     std::vector<cv::Vec3f> circles;
     // std::cerr << "rawImg.type(): " << rawImg.type() << std::endl;
     // std::cerr << "gray.type(): " << gray.type() << std::endl;
@@ -346,6 +345,7 @@ private:
     } else {
       // std::cerr << "Nr. of circles: " << circles.size() << std::endl;
     }
+    */
 
     /*
     std::vector<Point> filtered_frequency_points;
@@ -566,7 +566,6 @@ private:
   uint32_t height_{0};          // image height
   uint64_t eventCount_{0};
   uint32_t lastEventTime_;
-  std::vector<uint64_t> eventTimesNs_;
   // ---------- variables for state update
   variable_t c_[2];
   variable_t c_p_{0};
@@ -591,7 +590,6 @@ private:
 
   std::ofstream csv_file_;
   std::vector<uint64_t> externalTriggers_;
-  uint64_t lastEventTimeNs_;
   bool initialize_time_stamps_{false};
   bool fix_time_stamps_{false}; 
 

@@ -201,7 +201,7 @@ void FrequencyCamROS::makeAndWriteFrame(
   uint64_t debugTime, const std::string & path, uint32_t frameCount)
 {
   cv::Mat eventImg;
-  auto freqImg =
+  cv::Mat freqImg =
     cam_.makeFrequencyAndEventImage(&eventImg, overlayEvents_, useLogFrequency_, eventImageDt_, debugTime);
   const cv::Mat window = imageMaker_.make(debugTime, freqImg, eventImg);
   char fname[256];
@@ -258,7 +258,7 @@ void FrequencyCamROS::frameTimerExpired()
 {
   if (imagePub_.getNumSubscribers() != 0 && height_ != 0) {
     cv::Mat eventImg;
-    auto freqImg =
+    cv::Mat freqImg =
       cam_.makeFrequencyAndEventImage(&eventImg, overlayEvents_, useLogFrequency_, eventImageDt_);
     const cv::Mat window =
       imageMaker_.make(this->get_clock()->now().nanoseconds(), freqImg, eventImg);
