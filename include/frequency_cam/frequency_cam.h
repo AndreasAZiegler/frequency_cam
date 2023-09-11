@@ -329,9 +329,15 @@ private:
       }
     }
 
+    // Save virtual frame for debbuging
     cv::Mat gray(height_, width_, CV_8UC1);
     rawImg.convertTo(gray, CV_8UC1);
-    std::string file_name = "debug_frames/debug_" + std::to_string(debug_image_counter_) + ".png";
+
+    std::string string_counter = std::to_string(debug_image_counter_);
+    unsigned int number_of_zeros = 5 - string_counter.length(); // add 2 zeros
+    string_counter.insert(0, number_of_zeros, '0');
+
+    std::string file_name = "debug_frames/debug_" + string_counter + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
 

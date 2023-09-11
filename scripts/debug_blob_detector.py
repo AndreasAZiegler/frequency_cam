@@ -1,11 +1,14 @@
 import cv2 as cv
+import glob
 import numpy as np
 import os
 
 directory = "/data/ros_ws/calibration_ws/debug_frames/"
 
-for filename in os.listdir(directory):
-    file = os.path.join(directory, filename)
+# for filename in os.listdir(directory):
+file_list =  glob.iglob(directory + '/*.png')
+for file in sorted(file_list):
+    # file = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(file):
         # image = cv.imread(file, cv.IMREAD_COLOR)
