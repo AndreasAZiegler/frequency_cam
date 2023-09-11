@@ -73,7 +73,8 @@ bool FrequencyCamROS::initialize()
   imageMaker_.setNumSigDigits(declare_parameter<int>("legend_num_sig_digits", 3));
   cam_.initialize(
     minFreq, maxFreq, declare_parameter<double>("cutoff_period", 5.0),
-    declare_parameter<int>("num_timeout_cycles", 2.0), debugX_, debugY_);
+    declare_parameter<int>("num_timeout_cycles", 2.0), debugX_, debugY_,
+    declare_parameter<int>("visualization_choice", 0));
 
   const std::string bag = this->declare_parameter<std::string>("bag_file", "");
   if (bag.empty()) {

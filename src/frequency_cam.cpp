@@ -58,7 +58,7 @@ static void compute_alpha_beta(const double T_cut, double * alpha, double * beta
 
 bool FrequencyCam::initialize(
   double minFreq, double maxFreq, double cutoffPeriod, int timeoutCycles, uint16_t debugX,
-  uint16_t debugY)
+  uint16_t debugY, int visualization_choice)
 {
 #ifdef DEBUG  // the debug flag must be set in the header file
   debug_.open("freq.txt", std::ofstream::out);
@@ -82,6 +82,9 @@ bool FrequencyCam::initialize(
 
   debugX_ = debugX;
   debugY_ = debugY;
+
+  visualization_choice_ = visualization_choice;
+
   return (true);
 }
 

@@ -53,7 +53,8 @@ def launch_setup(context, *args, **kwargs):
              # 'frame_time_file': 'data/2023-05-12/calib_0/2023-05-12_calib_0_triggers.txt',
              # 'frame_time_file': 'data/2023-09-07/wand_calib_2/triggers.txt',
              # 'frame_time_file': 'data/2023-09-07/wand_calib_0/triggers.txt',
-             'publishing_frequency': 25.0}],
+             'publishing_frequency': 25.0,
+             'visualization_choice': 2}],
         remappings=[
             ('~/events', event_topic),
             ('~/image', image_topic)
