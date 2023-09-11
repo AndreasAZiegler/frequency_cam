@@ -1,13 +1,23 @@
+import argparse
 import cv2 as cv
 import glob
 import numpy as np
 import os
+
+parser = argparse.ArgumentParser('Tune blob detector')
+parser.add_argument('--frame_number', '-fn', type=int, default=0,
+        help='The frame number to start with.')
+args = parser.parse_args()
 
 directory = "/data/ros_ws/calibration_ws/debug_frames/"
 
 # for filename in os.listdir(directory):
 file_list =  glob.iglob(directory + '/*.png')
 for file in sorted(file_list):
+    frame_number = int(file[-9:-4])
+    if frame_number < args.frame_number:
+        continue
+
     # file = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(file):
