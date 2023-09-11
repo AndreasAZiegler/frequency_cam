@@ -38,18 +38,23 @@ def launch_setup(context, *args, **kwargs):
         name='frequency_cam',
         parameters=[
             {'use_sim_time': LaunchConfig('use_sim_time'),
-             'min_frequency': 500.0,
-             'max_frequency': 1000.0,
+             'min_frequency': 300.0,
+             'max_frequency': 800.0,
              'cutoff_period': 5.0,  # prefilter cutoff period #events
              'debug_x': 240,
              'debug_y': 194,
              'use_log_frequency': False,
              'overlay_events': True,
              #'bag_file': LaunchConfig('bag').perform(context),
-             'bag_file': '2023-03-08-wand_1-dvs2',
+             # 'bag_file': 'data/2023-05-12/calib_0/events_1/2023-05-12_calib_0_dvs1',
+             # 'bag_file': 'data/2023-09-07/wand_calib_2/events_1/dvs1',
+             # 'bag_file': 'data/2023-09-07/wand_calib_0/events_1/dvs1',
              # 'frame_time_file': LaunchConfig('frame_time_file').perform(context),
-             'frame_time_file': 'triggers.txt',
-             'publishing_frequency': 25.0}],
+             # 'frame_time_file': 'data/2023-05-12/calib_0/2023-05-12_calib_0_triggers.txt',
+             # 'frame_time_file': 'data/2023-09-07/wand_calib_2/triggers.txt',
+             # 'frame_time_file': 'data/2023-09-07/wand_calib_0/triggers.txt',
+             'publishing_frequency': 25.0,
+             'visualization_choice': 2}],
         remappings=[
             ('~/events', event_topic),
             ('~/image', image_topic)

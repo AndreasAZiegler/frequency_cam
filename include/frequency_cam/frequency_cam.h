@@ -28,6 +28,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/features2d.hpp>
 #include <eigen3/Eigen/Dense>
 
 // #define DEBUG
@@ -35,12 +36,40 @@
 namespace frequency_cam
 {
 
-int roundUp(const int numToRound, const int multiple);
-
 class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
-  FrequencyCam() : csv_file_("frequency_points.csv"), debug_image_counter_(0) {}
+  FrequencyCam()
+  : mean_position_csv_file_("mean_position_points.csv"),
+    hough_circle_position_csv_file_("hough_circle_position_points.csv"),
+    blob_detection_position_csv_file_("blob_detection_position_points.csv"),
+    debug_image_counter_(0) {
+    // Change thresholds
+    blob_detector_params_.minThreshold = 200;
+    blob_detector_params_.maxThreshold = 260;
+     
+    // Filter by Area.
+    blob_detector_params_.filterByArea = true;
+    blob_detector_params_.minArea = 20;
+     
+    // Filter by Circularity
+    blob_detector_params_.filterByCircularity = false;
+    blob_detector_params_.minCircularity = 0.7;
+     
+    // Filter by Convexity
+    blob_detector_params_.filterByConvexity = false;
+    blob_detector_params_.minConvexity = 0.5;
+     
+    // Filter by Inertia
+    blob_detector_params_.filterByInertia = false;
+    blob_detector_params_.minInertiaRatio = 0.5;
+
+    blob_detector_params_.minDistBetweenBlobs = 10;
+
+    blob_detector_params_.blobColor = 255;
+
+    blob_detector_ = cv::SimpleBlobDetector::create(blob_detector_params_);
+  }
   ~FrequencyCam();
 
   FrequencyCam(const FrequencyCam &) = delete;
@@ -49,23 +78,27 @@ public:
   // ------------- inherited from EventProcessor
   inline void eventCD(uint64_t sensor_time, uint16_t ex, uint16_t ey, uint8_t polarity) override
   {
+    /*
     // If the first time stamp is > 15s, there is an offset which we subtract every time.
     if (!initialize_time_stamps_) {
       initialize_time_stamps_ = true;
       if (sensor_time > 15000000000) {
         fix_time_stamps_ = true;
+        std::cerr << "Time stamp needs to be fixed!" << std::endl;
+      } else {
+        std::cerr << "Time stamp seems fine!" << std::endl;
       }
     }
     if (fix_time_stamps_) {
       sensor_time -= 16777215000;
     }
+    */
     // std::cout << "Event: time stamp: " << sensor_time << std::endl;
+    // std::cerr << "ex: " << ex << ", ey: " << ey << ", time: " << shorten_time(sensor_time) << std::endl;
     Event e(shorten_time(sensor_time), ex, ey, polarity);
     updateState(&state_[e.y * width_ + e.x], e);
     lastEventTime_ = e.t;
-    lastEventTimeNs_ = sensor_time;
     eventCount_++;
-    eventTimesNs_.emplace_back(sensor_time);
   }
   void eventExtTrigger(uint64_t sensor_time, uint8_t edge, uint8_t /*id*/) override
   {
@@ -105,7 +138,7 @@ public:
 
   bool initialize(
     double minFreq, double maxFreq, double cutoffPeriod, int timeoutCycles, uint16_t debugX,
-    uint16_t debugY);
+    uint16_t debugY, int visualization_choice);
 
   void initializeState(uint32_t width, uint32_t height, uint64_t t_first, uint64_t t_off);
 
@@ -277,6 +310,8 @@ private:
         // compute time since last touched
         const double dtEvent = (lastEventTime_ - state.lastTime()) * 1e-6;
         U::update(eventFrame, ix, iy, dtEvent, eventImageDt);
+        if (x_updates_.at(ix) && y_updates_.at(iy)) {
+        }
         if (state.period > 0) {
           const double dt =
             (lastEventTime_ - std::max(state.t_flip_up_down, state.t_flip_down_up)) * 1e-6;
@@ -298,40 +333,92 @@ private:
       }
     }
 
-    // cv::Mat gray(height_, width_, CV_8SC1);
+    // Save virtual frame for debbuging
     cv::Mat gray(height_, width_, CV_8UC1);
     rawImg.convertTo(gray, CV_8UC1);
-    std::string file_name = "debug_frames/debug_" + std::to_string(debug_image_counter_) + ".png";
+
+    std::string string_counter = std::to_string(debug_image_counter_);
+    unsigned int number_of_zeros = 5 - string_counter.length(); // add 2 zeros
+    string_counter.insert(0, number_of_zeros, '0');
+
+    std::string file_name = "debug_frames/debug_" + string_counter + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
+
+    // Hough circle detection
     std::vector<cv::Vec3f> circles;
-    // std::cerr << "rawImg.type(): " << rawImg.type() << std::endl;
-    // std::cerr << "gray.type(): " << gray.type() << std::endl;
-    // double minVal;
-    // double maxVal;
-    // cv::Point minLoc;
-    // cv::Point maxLoc;
-    // cv::minMaxLoc(rawImg, &minVal, &maxVal, &minLoc, &maxLoc);
-    // std::cout << "rawImg: min val: " << minVal << ", max val: " << maxVal << std::endl;
-    // cv::minMaxLoc(gray, &minVal, &maxVal, &minLoc, &maxLoc);
-    // std::cout << "gray: min val: " << minVal << ", max val: " << maxVal << std::endl;
-    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1, 10, 1, 4, 0, 10);
-    if (circles.size() == 3) {
-      for (std::size_t i = 0; i < circles.size(); ++i) {
-        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
-        // draw the circle center
-        // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
-        cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
-        // draw the circle outline
-        cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
-      }
-      cv::putText(rawImg, "Nr. of circles: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-    } else {
-      // std::cerr << "Nr. of circles: " << circles.size() << std::endl;
+    cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1/*dp*/, 20/*minDist*/, 10/*param1*/, 8/*param2*/, 0, 10);
+    std::vector<Point> circles_points;
+    for (const auto& circle: circles) {
+      circles_points.emplace_back(circle[0], circle[1]);
     }
 
-    /*
+    if (3 == circles.size()) {
+      int idx_min;
+      int idx_max;
+      double dist_0_1;
+      double dist_1_2;
+      double dist_0_2;
+      sort3Kp(circles_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
+      hough_circle_position_csv_file_ << trigger_timestamp;
+      for (const auto& circle : circles_points) {
+        hough_circle_position_csv_file_ << ";" << cvRound(circle.x) << ";" << cvRound(circle.y);
+
+        if (1 == visualization_choice_) {
+          cv::Point center(cvRound(circle.x), cvRound(circle.y));
+          // int radius = cvRound(circle[2]);
+          // draw the circle center
+          // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
+          cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
+          // draw the circle outline
+          // cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
+        }
+      }
+      if (1 == visualization_choice_) {
+        cv::putText(rawImg, "Nr. of markers: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      }
+      hough_circle_position_csv_file_ << "\n";
+      nrHoughDetectedWands_++;
+    } else {
+      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
+      hough_circle_position_csv_file_ << trigger_timestamp;
+      hough_circle_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+
+      if (1 == visualization_choice_) {
+        cv::putText(rawImg, "Nr. of markers: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      }
+    }
+
+    // Blob detection
+    std::vector<cv::KeyPoint> keypoints;
+    blob_detector_->detect(gray, keypoints);
+
+    if (3 == keypoints.size()) {
+      blob_detection_position_csv_file_ << trigger_timestamp;
+      // cv::drawKeypoints(rawImg, keypoints, rawImg, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+      for (const auto& keypoint : keypoints) {
+        blob_detection_position_csv_file_ << ";" << keypoint.pt.x << ";" << keypoint.pt.y;
+        if (2 == visualization_choice_) {
+          cv::circle(rawImg, keypoint.pt, 1, cv::Scalar(800, 800, 800), 1);
+        }
+      }
+
+      if (2 == visualization_choice_) {
+        cv::putText(rawImg, "Nr. of markers: " + std::to_string(keypoints.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      }
+      blob_detection_position_csv_file_ << "\n";
+      nrBlobDetectedWands_++;
+    } else {
+      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
+      blob_detection_position_csv_file_ << trigger_timestamp;
+      blob_detection_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+
+      if (2 == visualization_choice_) {
+        cv::putText(rawImg, "Nr. of markers: " + std::to_string(keypoints.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      }
+    }
+
+    // Mean position
     std::vector<Point> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
     std::vector<std::size_t> assigned_indices;
@@ -468,42 +555,50 @@ private:
       //for (const auto & filtered_point : filtered_points) {
 
       // Write to csv file
-      csv_file_ << trigger_timestamp;
+      mean_position_csv_file_ << trigger_timestamp;
       for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
         // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
         //           << ", y: " << std::get<1>(filtered_frequency_points.at(i))
         //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
         //           << ", number of points: " << number_of_points.at(i) << std::endl;
         // auto frequency = std::get<0>(filtered_frequency_points.at(i));
-        csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
+        mean_position_csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
                   << filtered_frequency_points.at(i).y;
 
         // Visualize detected markers with circles
-        double color_level = 0;
-        if (i == 0) {
-          color_level = 1000;
-        } else if (i == 1) {
-          color_level = 800;
-        } else if (i == 2) {
-          color_level = 600;
+        if (3 == visualization_choice_) {
+          double color_level = 0;
+          if (i == 0) {
+            color_level = 1000;
+          } else if (i == 1) {
+            color_level = 800;
+          } else if (i == 2) {
+            color_level = 600;
+          }
+
+          cv::circle(
+            rawImg,
+            {static_cast<int>(filtered_frequency_points.at(i).x),
+             static_cast<int>(filtered_frequency_points.at(i).y)},
+            // 2, CV_RGB(550, 550, 550), 4);
+            12, CV_RGB(color_level, color_level, color_level), 6);
+             //    cv::putText(rawImg, std::to_string(i),
+             //                {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
+             //                 static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
+             //                cv::FONT_HERSHEY_SIMPLEX,
+             //                2,
+             //                550,
+             //                4);
         }
-        cv::circle(
-          rawImg,
-          {static_cast<int>(filtered_frequency_points.at(i).x),
-           static_cast<int>(filtered_frequency_points.at(i).y)},
-          // 2, CV_RGB(550, 550, 550), 4);
-          12, CV_RGB(color_level, color_level, color_level), 6);
-           //    cv::putText(rawImg, std::to_string(i),
-           //                {static_cast<int>(std::get<0>(filtered_frequency_points.at(i))),
-           //                 static_cast<int>(std::get<1>(filtered_frequency_points.at(i)))},
-           //                cv::FONT_HERSHEY_SIMPLEX,
-           //                2,
-           //                550,
-           //                4);
       }
-      csv_file_ << "\n";
+      mean_position_csv_file_ << "\n";
+
+      if (3 == visualization_choice_) {
+        cv::putText(rawImg, "Nr. of markers: " + std::to_string(filtered_frequency_points.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      }
 
       // Add debug information to frame
+      /*
       cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
@@ -522,14 +617,18 @@ private:
       auto p3y = filtered_frequency_points.at(2).y;
       cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      */
 
-      nrDetectedWands_++;
+      nrMeanDetectedWands_++;
     } else {
       // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
-      csv_file_ << trigger_timestamp;
-      csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+      mean_position_csv_file_ << trigger_timestamp;
+      mean_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+
+      if (3 == visualization_choice_) {
+        cv::putText(rawImg, "Nr. of markers: " + std::to_string(filtered_frequency_points.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      }
     }
-    */
 
     cv::putText(rawImg, "time stamp: " + std::to_string(trigger_timestamp), {800, 600}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
     return (rawImg);
@@ -550,7 +649,6 @@ private:
   uint32_t height_{0};          // image height
   uint64_t eventCount_{0};
   uint32_t lastEventTime_;
-  std::vector<uint64_t> eventTimesNs_;
   // ---------- variables for state update
   variable_t c_[2];
   variable_t c_p_{0};
@@ -570,16 +668,26 @@ private:
   bool eventExtTriggerInitialized_{false};
   std::size_t nrExtTriggers_{0};
   std::size_t nrSyncMatches_{0};
-  std::size_t nrDetectedWands_{0};
+  std::size_t nrMeanDetectedWands_{0};
+  std::size_t nrHoughDetectedWands_{0};
+  std::size_t nrBlobDetectedWands_{0};
   uint8_t lasteExternalEdge_;
 
-  std::ofstream csv_file_;
+  std::ofstream mean_position_csv_file_;
+  std::ofstream hough_circle_position_csv_file_;
+  std::ofstream blob_detection_position_csv_file_;
   std::vector<uint64_t> externalTriggers_;
-  uint64_t lastEventTimeNs_;
   bool initialize_time_stamps_{false};
   bool fix_time_stamps_{false}; 
 
+  cv::Ptr<cv::SimpleBlobDetector> blob_detector_;
+  cv::SimpleBlobDetector::Params blob_detector_params_;
+
   std::size_t debug_image_counter_;
+  std::vector<int> x_updates_;
+  std::vector<int> y_updates_;
+
+  std::size_t visualization_choice_;
 };
 std::ostream & operator<<(std::ostream & os, const FrequencyCam::Event & e);
 }  // namespace frequency_cam

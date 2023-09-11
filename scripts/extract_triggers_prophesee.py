@@ -22,18 +22,7 @@ def get_ext_trigger_timestamps(rawfile: Path):
                 for trigger in triggers:
                     all_triggers.append(trigger[1])
                     all_polarities.append(trigger[0])
-                    # all_triggers.append({'time': trigger[1], 'polarity': trigger[0]})
                 mv_iterator.reader.clear_ext_trigger_events()
-
-    # rawreader = RawReader(str(rawfile))
-    # print(rawreader)
-    # print(str(rawfile))
-
-    # # while not rawreader.is_done():
-    # #     print(rawreader.is_done())
-    # #     arr = rawreader.load_delta_t(10**5)
-    # #     print(arr)
-    # ext_trigger_list = rawreader.get_ext_trigger_events()
 
     time = np.array(all_triggers)
     pol = np.array(all_polarities)
@@ -55,7 +44,7 @@ def get_reconstruction_timestamps(time: np.ndarray, pol: np.ndarray, trigger_sou
         timestamps = time[pol==1]
         timestamps = timestamps + time_offset_us
 
-    return timestamps
+    return timestamps * 1e3
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Read trigger data from prophesee raw file')

@@ -73,7 +73,8 @@ bool FrequencyCamROS::initialize()
   imageMaker_.setNumSigDigits(declare_parameter<int>("legend_num_sig_digits", 3));
   cam_.initialize(
     minFreq, maxFreq, declare_parameter<double>("cutoff_period", 5.0),
-    declare_parameter<int>("num_timeout_cycles", 2.0), debugX_, debugY_);
+    declare_parameter<int>("num_timeout_cycles", 2.0), debugX_, debugY_,
+    declare_parameter<int>("visualization_choice", 0));
 
   const std::string bag = this->declare_parameter<std::string>("bag_file", "");
   if (bag.empty()) {
@@ -201,7 +202,7 @@ void FrequencyCamROS::makeAndWriteFrame(
   uint64_t debugTime, const std::string & path, uint32_t frameCount)
 {
   cv::Mat eventImg;
-  auto freqImg =
+  cv::Mat freqImg =
     cam_.makeFrequencyAndEventImage(&eventImg, overlayEvents_, useLogFrequency_, eventImageDt_, debugTime);
   const cv::Mat window = imageMaker_.make(debugTime, freqImg, eventImg);
   char fname[256];
@@ -258,7 +259,7 @@ void FrequencyCamROS::frameTimerExpired()
 {
   if (imagePub_.getNumSubscribers() != 0 && height_ != 0) {
     cv::Mat eventImg;
-    auto freqImg =
+    cv::Mat freqImg =
       cam_.makeFrequencyAndEventImage(&eventImg, overlayEvents_, useLogFrequency_, eventImageDt_);
     const cv::Mat window =
       imageMaker_.make(this->get_clock()->now().nanoseconds(), freqImg, eventImg);

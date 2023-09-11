@@ -21,12 +21,6 @@
 #include <iomanip>
 #include <iostream>
 
-int64_t getDifference(uint64_t first, uint64_t second) {
-    uint64_t abs_diff = (first > second) ? (first - second): (second - first);
-    assert(abs_diff<=INT64_MAX);
-    return (first > second) ? static_cast<int64_t>(abs_diff) : -static_cast<int64_t>(abs_diff);
-}
-
 template <typename T, typename A> int arg_max(std::vector<T, A> const &vec) {
   return static_cast<int>(
       std::distance(vec.begin(), max_element(vec.begin(), vec.end())));
@@ -40,27 +34,17 @@ template <typename T, typename A> int arg_min(std::vector<T, A> const &vec) {
 namespace frequency_cam
 {
 
-int roundUp(const int numToRound, const int multiple)
-{
-    if (multiple == 0) {
-      return numToRound;
-    }
-
-    int remainder = numToRound % multiple;
-    if (remainder == 0) {
-      return numToRound;
-    }
-
-    return numToRound + multiple - remainder;
-}
-
 FrequencyCam::~FrequencyCam() {
-  csv_file_.close();
+  mean_position_csv_file_.close();
+  hough_circle_position_csv_file_.close();
+  blob_detection_position_csv_file_.close();
   delete[] state_;
 
   std::cout << "Number of external triggers: " << nrExtTriggers_ << std::endl;
   std::cout << "Number of time synchronization matches: " << nrSyncMatches_ << std::endl;
-  std::cout << "Number of detected wands: " << nrDetectedWands_ << std::endl;
+  std::cout << "Number of detected wands by the mean approach: " << nrMeanDetectedWands_ << std::endl;
+  std::cout << "Number of detected wands by the hough approach: " << nrHoughDetectedWands_ << std::endl;
+  std::cout << "Number of detected wands by the blog approach: " << nrBlobDetectedWands_ << std::endl;
 }
 
 static void compute_alpha_beta(const double T_cut, double * alpha, double * beta)
@@ -74,7 +58,7 @@ static void compute_alpha_beta(const double T_cut, double * alpha, double * beta
 
 bool FrequencyCam::initialize(
   double minFreq, double maxFreq, double cutoffPeriod, int timeoutCycles, uint16_t debugX,
-  uint16_t debugY)
+  uint16_t debugY, int visualization_choice)
 {
 #ifdef DEBUG  // the debug flag must be set in the header file
   debug_.open("freq.txt", std::ofstream::out);
@@ -98,6 +82,9 @@ bool FrequencyCam::initialize(
 
   debugX_ = debugX;
   debugY_ = debugY;
+
+  visualization_choice_ = visualization_choice;
+
   return (true);
 }
 
@@ -109,6 +96,15 @@ void FrequencyCam::initializeState(uint32_t width, uint32_t height, uint64_t t_f
 #else
   (void)t_off;
 #endif
+
+  for (std::size_t i = 0; i < width; ++i) {
+    x_updates_.emplace_back(false);
+  }
+  std::cerr << "x_updates_.size(): " << x_updates_.size() << std::endl;
+  for (std::size_t i = 0; i < height; ++i) {
+    y_updates_.emplace_back(false);
+  }
+  std::cerr << "y_updates_.size(): " << y_updates_.size() << std::endl;
 
   width_ = width;
   height_ = height;
@@ -143,25 +139,6 @@ cv::Mat FrequencyCam::makeFrequencyAndEventImage(
 void FrequencyCam::getStatistics(size_t * numEvents) const { *numEvents = eventCount_; }
 
 void FrequencyCam::resetStatistics() { eventCount_ = 0; }
-
-void FrequencyCam::setTriggers(const std::string & triggers_file) {
-  std::string line;
-  std::ifstream myfile;
-  myfile.open(triggers_file);
-
-  if(!myfile.is_open()) {
-    std::cerr << "Error opening trigger file" << std::endl;
-  }
-
-  while(getline(myfile, line)) {
-    uint64_t time_stamp = std::stoi(line);
-    externalTriggers_.emplace_back(time_stamp * 1000);
-  }
-  // for (const auto& element: externalTriggers_) {
-  //   std::cout << "Trigger time stamp: " << element << std::endl;
-  // }
-
-}
 
 // void FrequencyCam::sort3Kp(vector<cv::KeyPoint> &kp) {
 void FrequencyCam::sort3Kp(std::vector<Point>& kp, int& idx_min, int& idx_max, double& dist_0_1, double& dist_1_2, double& dist_0_2) {
