@@ -35,12 +35,16 @@ namespace frequency_cam
 {
 
 FrequencyCam::~FrequencyCam() {
-  csv_file_.close();
+  mean_position_csv_file_.close();
+  hough_circle_position_csv_file_.close();
+  blob_detection_position_csv_file_.close();
   delete[] state_;
 
   std::cout << "Number of external triggers: " << nrExtTriggers_ << std::endl;
   std::cout << "Number of time synchronization matches: " << nrSyncMatches_ << std::endl;
-  std::cout << "Number of detected wands: " << nrDetectedWands_ << std::endl;
+  std::cout << "Number of detected wands by the mean approach: " << nrMeanDetectedWands_ << std::endl;
+  std::cout << "Number of detected wands by the hough approach: " << nrHoughDetectedWands_ << std::endl;
+  std::cout << "Number of detected wands by the blog approach: " << nrBlobDetectedWands_ << std::endl;
 }
 
 static void compute_alpha_beta(const double T_cut, double * alpha, double * beta)

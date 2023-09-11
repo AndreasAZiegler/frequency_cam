@@ -39,7 +39,11 @@ namespace frequency_cam
 class FrequencyCam : public event_camera_codecs::EventProcessor
 {
 public:
-  FrequencyCam() : csv_file_("frequency_points.csv"), debug_image_counter_(0) {
+  FrequencyCam()
+  : mean_position_csv_file_("mean_position_points.csv"),
+    hough_circle_position_csv_file_("hough_circle_position_points.csv"),
+    blob_detection_position_csv_file_("blob_detection_position_points.csv"),
+    debug_image_counter_(0) {
     // Change thresholds
     blob_detector_params_.minThreshold = 200;
     blob_detector_params_.maxThreshold = 260;
@@ -344,26 +348,64 @@ private:
     // Hough circle detection
     std::vector<cv::Vec3f> circles;
     cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1/*dp*/, 20/*minDist*/, 10/*param1*/, 8/*param2*/, 0, 10);
-    for (std::size_t i = 0; i < circles.size(); ++i) {
-      cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-      int radius = cvRound(circles[i][2]);
-      // draw the circle center
-      // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
-      cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
-      // draw the circle outline
-      cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
-    }
-    cv::putText(rawImg, "Nr. of circles: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-    if (circles.size() > 3) {
-      std::cerr << "trigger_timestamp: " << trigger_timestamp << ", circles.size(): " << circles.size() << std::endl;
+    std::vector<Point> circles_points;
+    for (const auto& circle: circles) {
+      circles_points.emplace_back(circle[0], circle[1]);
     }
 
+    bool visualize_hough = false;
+    if (3 == circles.size()) {
+      int idx_min;
+      int idx_max;
+      double dist_0_1;
+      double dist_1_2;
+      double dist_0_2;
+      sort3Kp(circles_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
+      hough_circle_position_csv_file_ << trigger_timestamp;
+      for (const auto& circle : circles_points) {
+        hough_circle_position_csv_file_ << ";" << cvRound(circle.x) << ";" << cvRound(circle.y);
+
+        if (visualize_hough) {
+          cv::Point center(cvRound(circle.x), cvRound(circle.y));
+          // int radius = cvRound(circle[2]);
+          // draw the circle center
+          // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
+          cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
+          // draw the circle outline
+          // cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
+        }
+      }
+      hough_circle_position_csv_file_ << "\n";
+      nrHoughDetectedWands_++;
+    } else {
+      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
+      hough_circle_position_csv_file_ << trigger_timestamp;
+      hough_circle_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+    }
+
+    // Blob detection
     std::vector<cv::KeyPoint> keypoints;
     blob_detector_->detect(gray, keypoints);
 
-    cv::drawKeypoints(rawImg, keypoints, rawImg, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    bool visualize_blob_detection = true;
+    if (3 == keypoints.size()) {
+      blob_detection_position_csv_file_ << trigger_timestamp;
+      // cv::drawKeypoints(rawImg, keypoints, rawImg, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+      for (const auto& keypoint : keypoints) {
+        blob_detection_position_csv_file_ << ";" << keypoint.pt.x << ";" << keypoint.pt.y;
+        if (visualize_blob_detection) {
+          cv::circle(rawImg, keypoint.pt, 1, cv::Scalar(800, 800, 800), 1);
+        }
+      }
+      blob_detection_position_csv_file_ << "\n";
+      nrBlobDetectedWands_++;
+    } else {
+      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
+      blob_detection_position_csv_file_ << trigger_timestamp;
+      blob_detection_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+    }
 
-    /*
+    // Mean position
     std::vector<Point> filtered_frequency_points;
     std::vector<std::size_t> number_of_points;
     std::vector<std::size_t> assigned_indices;
@@ -459,6 +501,7 @@ private:
 
     // Only proceed if we detected three clusters (three markers)
     // if (!filtered_frequency_points.empty()) {
+    bool mean_visualization = false;
     if (filtered_frequency_points.size() == 3) {
       int idx_min;
       int idx_max;
@@ -478,39 +521,40 @@ private:
       // std::cout << "x1: " << std::get<0>(filtered_frequency_points.at(0)) << std::endl;
       // std::cout << "y1 : " << std::get<1>(filtered_frequency_points.at(0)) << std::endl;
       // std::cout << "x2: " << std::get<0>(filtered_frequency_points.at(1)) << std::endl;
-        // std::cout << "y2 : " << std::get<1>(filtered_frequency_points.at(1)) << std::endl;
-        // std::cout << "x3: " << std::get<0>(filtered_frequency_points.at(2)) << std::endl;
-        // std::cout << "y3 : " << std::get<1>(filtered_frequency_points.at(2)) << std::endl;
-        // std::cout << "term 1: " << term_1 << ", term 2: " << term_2 << ", term_3: " << term_3 << std::endl;
-        // std::cout << "residual: " << std::fabs(residual) << std::endl;
+      // std::cout << "y2 : " << std::get<1>(filtered_frequency_points.at(1)) << std::endl;
+      // std::cout << "x3: " << std::get<0>(filtered_frequency_points.at(2)) << std::endl;
+      // std::cout << "y3 : " << std::get<1>(filtered_frequency_points.at(2)) << std::endl;
+      // std::cout << "term 1: " << term_1 << ", term 2: " << term_2 << ", term_3: " << term_3 << std::endl;
+      // std::cout << "residual: " << std::fabs(residual) << std::endl;
 
 
-        // Line constraint from https://stackoverflow.com/questions/28619791/how-do-i-check-to-see-if-three-points-form-a-straight-line
-        // Eigen::Matrix3f matrix;
-        // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
-        //           std::get<0>(filtered_frequency_points.at(1)), std::get<1>(filtered_frequency_points.at(1)), 1.0,
-        //           std::get<0>(filtered_frequency_points.at(2)), std::get<1>(filtered_frequency_points.at(2)), 1.0;
-        // Eigen::FullPivLU<Eigen::Matrix3f> lu_decomp(matrix);
-        // auto rank = lu_decomp.rank();
-        // std::cout << "Rank: " << rank << std::endl;
-        // // result = rank([x2-x1, y2-y1; x3-x1, y3-y1]) < 2;
+      // Line constraint from https://stackoverflow.com/questions/28619791/how-do-i-check-to-see-if-three-points-form-a-straight-line
+      // Eigen::Matrix3f matrix;
+      // matrix << std::get<0>(filtered_frequency_points.at(0)), std::get<1>(filtered_frequency_points.at(0)), 1.0,
+      //           std::get<0>(filtered_frequency_points.at(1)), std::get<1>(filtered_frequency_points.at(1)), 1.0,
+      //           std::get<0>(filtered_frequency_points.at(2)), std::get<1>(filtered_frequency_points.at(2)), 1.0;
+      // Eigen::FullPivLU<Eigen::Matrix3f> lu_decomp(matrix);
+      // auto rank = lu_decomp.rank();
+      // std::cout << "Rank: " << rank << std::endl;
+      // // result = rank([x2-x1, y2-y1; x3-x1, y3-y1]) < 2;
 
-        // std::cout << "Filtered points:" << std::endl;
-        // std::cout << "time stamp: " << lastEventTime_ << std::endl;
-        //for (const auto & filtered_point : filtered_points) {
+      // std::cout << "Filtered points:" << std::endl;
+      // std::cout << "time stamp: " << lastEventTime_ << std::endl;
+      //for (const auto & filtered_point : filtered_points) {
 
-        // Write to csv file
-        csv_file_ << trigger_timestamp;
-        for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
-          // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
-          //           << ", y: " << std::get<1>(filtered_frequency_points.at(i))
-          //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
-          //           << ", number of points: " << number_of_points.at(i) << std::endl;
-          // auto frequency = std::get<0>(filtered_frequency_points.at(i));
-          csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
-                    << filtered_frequency_points.at(i).y;
+      // Write to csv file
+      mean_position_csv_file_ << trigger_timestamp;
+      for (std::size_t i = 0; i < filtered_frequency_points.size(); ++i) {
+        // std::cout << "x: " << std::get<0>(filtered_frequency_points.at(i))
+        //           << ", y: " << std::get<1>(filtered_frequency_points.at(i))
+        //           << ", frequency: " << std::get<2>(filtered_frequency_points.at(i))
+        //           << ", number of points: " << number_of_points.at(i) << std::endl;
+        // auto frequency = std::get<0>(filtered_frequency_points.at(i));
+        mean_position_csv_file_ << ";" << filtered_frequency_points.at(i).x << ";"
+                  << filtered_frequency_points.at(i).y;
 
-          // Visualize detected markers with circles
+        // Visualize detected markers with circles
+        if (mean_visualization) {
           double color_level = 0;
           if (i == 0) {
             color_level = 1000;
@@ -519,6 +563,7 @@ private:
           } else if (i == 2) {
             color_level = 600;
           }
+
           cv::circle(
             rawImg,
             {static_cast<int>(filtered_frequency_points.at(i).x),
@@ -533,35 +578,37 @@ private:
              //                550,
              //                4);
         }
-        csv_file_ << "\n";
-
-        // Add debug information to frame
-        cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "dist_1_2: " + std::to_string(dist_1_2), {50, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "dist_0_2: " + std::to_string(dist_0_2), {50, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-
-        auto p1x = filtered_frequency_points.at(0).x;
-        auto p1y = filtered_frequency_points.at(0).y;
-        cv::putText(rawImg, "p0: x: " + std::to_string(p1x), {1000, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "p0: y: " + std::to_string(p1y), {1000, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        auto p2x = filtered_frequency_points.at(1).x;
-        auto p2y = filtered_frequency_points.at(1).y;
-        cv::putText(rawImg, "p1: x: " + std::to_string(p2x), {1000, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "p1: y: " + std::to_string(p2y), {1000, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        auto p3x = filtered_frequency_points.at(2).x;
-        auto p3y = filtered_frequency_points.at(2).y;
-        cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-        cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
-
-        nrDetectedWands_++;
-      } else {
-        // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
-        csv_file_ << trigger_timestamp;
-        csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
       }
+      mean_position_csv_file_ << "\n";
+
+      // Add debug information to frame
+      /*
+      cv::putText(rawImg, "idx_min: " + std::to_string(idx_min), {50, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "idx_max: " + std::to_string(idx_max), {50, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "dist_0_1: " + std::to_string(dist_0_1), {50, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "dist_1_2: " + std::to_string(dist_1_2), {50, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "dist_0_2: " + std::to_string(dist_0_2), {50, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+
+      auto p1x = filtered_frequency_points.at(0).x;
+      auto p1y = filtered_frequency_points.at(0).y;
+      cv::putText(rawImg, "p0: x: " + std::to_string(p1x), {1000, 300}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "p0: y: " + std::to_string(p1y), {1000, 340}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      auto p2x = filtered_frequency_points.at(1).x;
+      auto p2y = filtered_frequency_points.at(1).y;
+      cv::putText(rawImg, "p1: x: " + std::to_string(p2x), {1000, 380}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "p1: y: " + std::to_string(p2y), {1000, 420}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      auto p3x = filtered_frequency_points.at(2).x;
+      auto p3y = filtered_frequency_points.at(2).y;
+      cv::putText(rawImg, "p2: x: " + std::to_string(p3x), {1000, 460}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
+      cv::putText(rawImg, "p2: y: " + std::to_string(p3y), {1000, 500}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
       */
+
+      nrMeanDetectedWands_++;
+    } else {
+      // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
+      mean_position_csv_file_ << trigger_timestamp;
+      mean_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+    }
 
     cv::putText(rawImg, "time stamp: " + std::to_string(trigger_timestamp), {800, 600}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
     return (rawImg);
@@ -601,10 +648,14 @@ private:
   bool eventExtTriggerInitialized_{false};
   std::size_t nrExtTriggers_{0};
   std::size_t nrSyncMatches_{0};
-  std::size_t nrDetectedWands_{0};
+  std::size_t nrMeanDetectedWands_{0};
+  std::size_t nrHoughDetectedWands_{0};
+  std::size_t nrBlobDetectedWands_{0};
   uint8_t lasteExternalEdge_;
 
-  std::ofstream csv_file_;
+  std::ofstream mean_position_csv_file_;
+  std::ofstream hough_circle_position_csv_file_;
+  std::ofstream blob_detection_position_csv_file_;
   std::vector<uint64_t> externalTriggers_;
   bool initialize_time_stamps_{false};
   bool fix_time_stamps_{false}; 
