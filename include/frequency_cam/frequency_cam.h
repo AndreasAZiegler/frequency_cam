@@ -79,6 +79,7 @@ public:
   inline void eventCD(uint64_t sensor_time, uint16_t ex, uint16_t ey, uint8_t polarity) override
   {
     // If the first time stamp is > 15s, there is an offset which we subtract every time.
+    /*
     if (!initialize_time_stamps_) {
       initialize_time_stamps_ = true;
       if (sensor_time > 15000000000) {
@@ -93,6 +94,7 @@ public:
     if (fix_time_stamps_) {
       sensor_time -= 16777215000;
     }
+    */
     // std::cout << "Event: time stamp: " << sensor_time << std::endl;
     // std::cerr << "ex: " << ex << ", ey: " << ey << ", time: " << shorten_time(sensor_time) << std::endl;
     Event e(shorten_time(sensor_time), ex, ey, polarity);
