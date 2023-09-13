@@ -71,9 +71,11 @@ bool FrequencyCamROS::initialize()
     declare_parameter<std::vector<double>>("legend_frequencies", std::vector<double>()));
   imageMaker_.setLegendNumBins(declare_parameter<int>("legend_num_bins", 11));
   imageMaker_.setNumSigDigits(declare_parameter<int>("legend_num_sig_digits", 3));
+  auto numTimeoutCycles = declare_parameter<int>("num_timeout_cycles", 2.0);
+  RCLCPP_INFO_STREAM(get_logger(), "number of timeout cycles: " << numTimeoutCycles);
   cam_.initialize(
     minFreq, maxFreq, declare_parameter<double>("cutoff_period", 5.0),
-    declare_parameter<int>("num_timeout_cycles", 2.0), debugX_, debugY_,
+    numTimeoutCycles, debugX_, debugY_,
     declare_parameter<int>("visualization_choice", 0));
 
   const std::string bag = this->declare_parameter<std::string>("bag_file", "");
@@ -180,6 +182,7 @@ void FrequencyCamROS::playEventsFromBag(const std::string & bagName, const std::
           // use loop in case multiple frames fit inbetween two events
           while (!frameTimes_.empty() && currentFrameTime <= nextTime) {
             makeAndWriteFrame(currentFrameTime, path, frameCount++);
+            // RCLCPP_INFO_STREAM(this->get_logger(), "currentFrameTime: " << currentFrameTime) ;
             currentFrameTime = frameTimes_.front();
             frameTimes_.pop();
           }
