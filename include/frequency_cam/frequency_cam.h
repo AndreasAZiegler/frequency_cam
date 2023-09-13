@@ -327,9 +327,11 @@ private:
             if (frequency > min_range && frequency < max_range) {
               frequency_points.emplace_back(ix, iy);
               // rawImg.at<float>(iy, ix) = frequency;
-              // rawImg.at<float>(iy, ix) = std::numeric_limits<long int>::max();
+              rawImg.at<float>(iy, ix) = std::max(255, max_range);
+            } else {
+            // rawImg.at<float>(iy, ix) = frequency;
+            rawImg.at<float>(iy, ix) = 0;  // mark as invalid
             }
-            rawImg.at<float>(iy, ix) = frequency;
           } else {
             rawImg.at<float>(iy, ix) = 0;  // mark as invalid
           }
