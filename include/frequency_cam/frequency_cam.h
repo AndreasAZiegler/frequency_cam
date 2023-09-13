@@ -294,6 +294,8 @@ private:
   template <class T, class U>
   cv::Mat makeTransformedFrequencyImage(cv::Mat * eventFrame, float eventImageDt, uint64_t trigger_timestamp)
   {
+    nrRuns_++;
+
     std::vector<Point> frequency_points;
 
     // const int min_range_1 = 2800;
