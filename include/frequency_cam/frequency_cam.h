@@ -350,6 +350,7 @@ private:
     std::string file_name = "debug_frames/debug_" + string_counter + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
+    auto debug_position_color = cv::Scalar(100, 100, 100);
 
     // Hough circle detection
     std::vector<cv::Vec3f> circles;
