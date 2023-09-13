@@ -100,8 +100,9 @@ public:
     lastEventTime_ = e.t;
     eventCount_++;
   }
-  void eventExtTrigger(uint64_t sensor_time, uint8_t edge, uint8_t /*id*/) override
+  void eventExtTrigger(uint64_t /*sensor_time*/, uint8_t /*edge*/, uint8_t /*id*/) override
   {
+    /*
     // If the first time stamp is > 15s, there is an offset which we subtract every time.
     if (!initialize_time_stamps_) {
       initialize_time_stamps_ = true;
@@ -130,6 +131,7 @@ public:
       lasteExternalEdge_ = edge;
     }
     // std::cout << "External trigger: sensor_time: " << sensor_time << ", edge: " << std::to_string(edge) << std::endl;
+    */
   }
 
   void finished() override {}
