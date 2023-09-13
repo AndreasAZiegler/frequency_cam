@@ -41,6 +41,7 @@ FrequencyCam::~FrequencyCam() {
   delete[] state_;
 
   std::cout << "Number of external triggers: " << nrExtTriggers_ << std::endl;
+  std::cout << "Number of runs: " << nrRuns_ << std::endl;
   std::cout << "Number of time synchronization matches: " << nrSyncMatches_ << std::endl;
   std::cout << "Number of detected wands by the mean approach: " << nrMeanDetectedWands_ << std::endl;
   std::cout << "Number of detected wands by the hough approach: " << nrHoughDetectedWands_ << std::endl;
