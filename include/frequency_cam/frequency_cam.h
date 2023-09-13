@@ -671,6 +671,7 @@ private:
   std::size_t nrMeanDetectedWands_{0};
   std::size_t nrHoughDetectedWands_{0};
   std::size_t nrBlobDetectedWands_{0};
+  std::size_t nrRuns_{0};
   uint8_t lasteExternalEdge_;
 
   std::ofstream mean_position_csv_file_;
