@@ -348,18 +348,19 @@ private:
     // Hough circle detection
     std::vector<cv::Vec3f> circles;
     cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1/*dp*/, 20/*minDist*/, 10/*param1*/, 8/*param2*/, 0, 10);
-    std::vector<Point> circles_points;
-    for (const auto& circle: circles) {
-      circles_points.emplace_back(circle[0], circle[1]);
-    }
 
     if (3 == circles.size()) {
+      std::vector<Point> circles_points;
+      for (const auto& circle: circles) {
+        circles_points.emplace_back(circle[0], circle[1]);
+      }
       int idx_min;
       int idx_max;
       double dist_0_1;
       double dist_1_2;
       double dist_0_2;
       sort3Kp(circles_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
+
       hough_circle_position_csv_file_ << trigger_timestamp;
       for (const auto& circle : circles_points) {
         hough_circle_position_csv_file_ << ";" << cvRound(circle.x) << ";" << cvRound(circle.y);
@@ -369,7 +370,7 @@ private:
           // int radius = cvRound(circle[2]);
           // draw the circle center
           // cv::circle(rawImg, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0 );
-          cv::circle(rawImg, center, 1, cv::Scalar(800, 800, 800), 1, 8, 0);
+          cv::circle(rawImg, center, 3, debug_position_color, 1, 8, 0);
           // draw the circle outline
           // cv::circle(rawImg, center, radius, cv::Scalar(800, 800, 800), 1, 8, 0);
         }
@@ -394,12 +395,23 @@ private:
     blob_detector_->detect(gray, keypoints);
 
     if (3 == keypoints.size()) {
+      std::vector<Point> circles_points;
+      for (const auto& keypoint: keypoints) {
+        circles_points.emplace_back(keypoint.pt.x, keypoint.pt.y);
+      }
+      int idx_min;
+      int idx_max;
+      double dist_0_1;
+      double dist_1_2;
+      double dist_0_2;
+      sort3Kp(circles_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
+
       blob_detection_position_csv_file_ << trigger_timestamp;
       // cv::drawKeypoints(rawImg, keypoints, rawImg, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-      for (const auto& keypoint : keypoints) {
-        blob_detection_position_csv_file_ << ";" << keypoint.pt.x << ";" << keypoint.pt.y;
+      for (const auto& circle : circles_points) {
+        blob_detection_position_csv_file_ << ";" << cvRound(circle.x) << ";" << cvRound(circle.y);
         if (2 == visualization_choice_) {
-          cv::circle(rawImg, keypoint.pt, 1, cv::Scalar(800, 800, 800), 1);
+          cv::circle(rawImg, {cvRound(circle.x), cvRound(circle.y)}, 3, debug_position_color, 1);
         }
       }
 
