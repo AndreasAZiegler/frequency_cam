@@ -30,30 +30,32 @@ for file in sorted(file_list):
 
         # Setup SimpleBlobDetector parameters.
         params = cv.SimpleBlobDetector_Params()
+
+        params.filterByColor = True
+        params.blobColor = 255
          
         # Change thresholds
-        params.minThreshold = 200;
-        params.maxThreshold = 260;
+        # params.minThreshold = 200;
+        # params.maxThreshold = 260;
          
         # Filter by Area.
         params.filterByArea = True
         params.minArea = 20
          
         # Filter by Circularity
-        params.filterByCircularity = False
-        params.minCircularity = 0.7
+        params.filterByCircularity = True
+        params.minCircularity = 0.5
          
         # Filter by Convexity
-        params.filterByConvexity = False
+        params.filterByConvexity = True
         params.minConvexity = 0.5
          
         # Filter by Inertia
-        params.filterByInertia = False
+        params.filterByInertia = True
         params.minInertiaRatio = 0.5
 
         params.minDistBetweenBlobs = 10
 
-        params.blobColor = 255
 
         # Set up the detector with default parameters.
         # detector = cv.SimpleBlobDetector()

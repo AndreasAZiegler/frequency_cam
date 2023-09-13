@@ -45,28 +45,30 @@ public:
     blob_detection_position_csv_file_("blob_detection_position_points.csv"),
     debug_image_counter_(0) {
     // Change thresholds
-    blob_detector_params_.minThreshold = 200;
-    blob_detector_params_.maxThreshold = 260;
+    blob_detector_params_.filterByColor = true;
+    blob_detector_params_.blobColor = 255;
+
+    // blob_detector_params_.minThreshold = 200;
+    // blob_detector_params_.maxThreshold = 260;
      
     // Filter by Area.
     blob_detector_params_.filterByArea = true;
-    blob_detector_params_.minArea = 20;
+    blob_detector_params_.minArea = 50;
+    blob_detector_params_.maxArea = 1000;
      
     // Filter by Circularity
-    blob_detector_params_.filterByCircularity = false;
-    blob_detector_params_.minCircularity = 0.7;
+    blob_detector_params_.filterByCircularity = true;
+    blob_detector_params_.minCircularity = 0.3;
      
     // Filter by Convexity
-    blob_detector_params_.filterByConvexity = false;
-    blob_detector_params_.minConvexity = 0.5;
+    blob_detector_params_.filterByConvexity = true;
+    blob_detector_params_.minConvexity = 0.4;
      
     // Filter by Inertia
     blob_detector_params_.filterByInertia = false;
     blob_detector_params_.minInertiaRatio = 0.5;
 
-    blob_detector_params_.minDistBetweenBlobs = 10;
-
-    blob_detector_params_.blobColor = 255;
+    // blob_detector_params_.minDistBetweenBlobs = 10;
 
     blob_detector_ = cv::SimpleBlobDetector::create(blob_detector_params_);
   }
