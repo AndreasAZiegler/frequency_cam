@@ -388,7 +388,7 @@ private:
     } else {
       // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
       hough_circle_position_csv_file_ << trigger_timestamp;
-      hough_circle_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+      hough_circle_position_csv_file_ << ";" << -1 << ";" << -1  << "\n";
 
       if (1 == visualization_choice_) {
         cv::putText(rawImg, "Nr. of markers: " + std::to_string(circles.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
@@ -422,7 +422,7 @@ private:
     } else {
       // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
       blob_detection_position_csv_file_ << trigger_timestamp;
-      blob_detection_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+      blob_detection_position_csv_file_ << ";" << -1 << ";" << -1 << "\n";
 
       if (2 == visualization_choice_) {
         cv::putText(rawImg, "Nr. of markers: " + std::to_string(keypoints.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
@@ -627,7 +627,7 @@ private:
     } else {
       // std::cout << "trigger_timestamp: " << trigger_timestamp << std::endl;
       mean_position_csv_file_ << trigger_timestamp;
-      mean_position_csv_file_ << ";" << -1 << ";" << -1  << ";" << -1 << ";" << -1 << ";" << -1 << ";" << -1 << "\n";
+      mean_position_csv_file_ << ";" << -1 << ";" << -1 << "\n";
 
       if (3 == visualization_choice_) {
         cv::putText(rawImg, "Nr. of markers: " + std::to_string(filtered_frequency_points.size()), {100, 100}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
