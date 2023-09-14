@@ -58,11 +58,11 @@ public:
      
     // Filter by Circularity
     blob_detector_params_.filterByCircularity = true;
-    blob_detector_params_.minCircularity = 0.3;
+    blob_detector_params_.minCircularity = 0.5;
      
     // Filter by Convexity
     blob_detector_params_.filterByConvexity = true;
-    blob_detector_params_.minConvexity = 0.4;
+    blob_detector_params_.minConvexity = 0.5;
      
     // Filter by Inertia
     blob_detector_params_.filterByInertia = false;
@@ -306,8 +306,8 @@ private:
     // const int max_range_1 = 3200;
     // const int min_range_2 = 3800;
     // const int max_range_2 = 4200;
-    const int min_range = 200;
-    const int max_range = 800;
+    const int min_range = 490;
+    const int max_range = 510;
     cv::Mat rawImg(height_, width_, CV_32FC1, 0.0);
     const double maxDt = 1.0 / freq_[0] * timeoutCycles_;
     const double minFreq = T::tf(freq_[0]);

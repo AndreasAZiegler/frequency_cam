@@ -41,6 +41,7 @@ for file in sorted(file_list):
         # Filter by Area.
         params.filterByArea = True
         params.minArea = 20
+        params.maxArea = 1000
          
         # Filter by Circularity
         params.filterByCircularity = True
@@ -51,10 +52,10 @@ for file in sorted(file_list):
         params.minConvexity = 0.5
          
         # Filter by Inertia
-        params.filterByInertia = True
+        params.filterByInertia = False
         params.minInertiaRatio = 0.5
 
-        params.minDistBetweenBlobs = 10
+        # params.minDistBetweenBlobs = 10
 
 
         # Set up the detector with default parameters.
