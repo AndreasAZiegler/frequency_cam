@@ -350,27 +350,21 @@ private:
     std::string string_counter = std::to_string(debug_image_counter_);
     unsigned int number_of_zeros = 5 - string_counter.length(); // add 2 zeros
     string_counter.insert(0, number_of_zeros, '0');
-
     std::string file_name = "debug_frames/debug_" + string_counter + ".png";
     cv::imwrite(file_name, gray);
     debug_image_counter_++;
+
     auto debug_position_color = cv::Scalar(100, 100, 100);
 
     // Hough circle detection
     std::vector<cv::Vec3f> circles;
     cv::HoughCircles(gray, circles, cv::HOUGH_GRADIENT, 1/*dp*/, 20/*minDist*/, 10/*param1*/, 8/*param2*/, 0, 10);
 
-    if (3 == circles.size()) {
+    if (1 == circles.size()) {
       std::vector<Point> circles_points;
       for (const auto& circle: circles) {
         circles_points.emplace_back(circle[0], circle[1]);
       }
-      int idx_min;
-      int idx_max;
-      double dist_0_1;
-      double dist_1_2;
-      double dist_0_2;
-      sort3Kp(circles_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
 
       hough_circle_position_csv_file_ << trigger_timestamp;
       for (const auto& circle : circles_points) {
@@ -405,17 +399,11 @@ private:
     std::vector<cv::KeyPoint> keypoints;
     blob_detector_->detect(gray, keypoints);
 
-    if (3 == keypoints.size()) {
+    if (1 == keypoints.size()) {
       std::vector<Point> circles_points;
       for (const auto& keypoint: keypoints) {
         circles_points.emplace_back(keypoint.pt.x, keypoint.pt.y);
       }
-      int idx_min;
-      int idx_max;
-      double dist_0_1;
-      double dist_1_2;
-      double dist_0_2;
-      sort3Kp(circles_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
 
       blob_detection_position_csv_file_ << trigger_timestamp;
       // cv::drawKeypoints(rawImg, keypoints, rawImg, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
@@ -536,14 +524,7 @@ private:
     }
 
     // Only proceed if we detected three clusters (three markers)
-    // if (!filtered_frequency_points.empty()) {
-    if (filtered_frequency_points.size() == 3) {
-      int idx_min;
-      int idx_max;
-      double dist_0_1;
-      double dist_1_2;
-      double dist_0_2;
-      sort3Kp(filtered_frequency_points, idx_min, idx_max, dist_0_1, dist_1_2, dist_0_2);
+    if (!filtered_frequency_points.empty()) {
 
       // Check if points are on a line (are collinear)
       // double residual = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
