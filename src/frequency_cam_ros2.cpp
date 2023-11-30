@@ -76,7 +76,8 @@ bool FrequencyCamROS::initialize()
   cam_.initialize(
     minFreq, maxFreq, declare_parameter<double>("cutoff_period", 5.0),
     numTimeoutCycles, debugX_, debugY_,
-    declare_parameter<int>("visualization_choice", 0));
+    declare_parameter<int>("visualization_choice", 0),
+    declare_parameter<bool>("debug_frames", false));
 
   const std::string bag = this->declare_parameter<std::string>("bag_file", "");
   if (bag.empty()) {
