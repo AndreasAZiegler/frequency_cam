@@ -133,7 +133,7 @@ public:
 
   bool initialize(
     double minFreq, double maxFreq, double cutoffPeriod, int timeoutCycles, uint16_t debugX,
-    uint16_t debugY, int visualization_choice);
+    uint16_t debugY, int visualization_choice, bool debug_frames);
 
   void initializeState(uint32_t width, uint32_t height, uint64_t t_first, uint64_t t_off);
 
@@ -696,7 +696,8 @@ private:
   std::vector<int> x_updates_;
   std::vector<int> y_updates_;
 
-  std::size_t visualization_choice_;
+  std::size_t visualizationChoice_;
+  bool debugFrames_;
 };
 std::ostream & operator<<(std::ostream & os, const FrequencyCam::Event & e);
 }  // namespace frequency_cam
