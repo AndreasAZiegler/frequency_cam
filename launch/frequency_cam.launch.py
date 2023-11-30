@@ -49,11 +49,13 @@ def launch_setup(context, *args, **kwargs):
              # 'bag_file': 'data/2023-05-12/calib_0/events_1/2023-05-12_calib_0_dvs1',
              # 'bag_file': 'data/2023-09-07/wand_calib_2/events_1/dvs1',
              # 'bag_file': 'data/2023-09-07/wand_calib_0/events_1/dvs1',
+             'bag_topic': 'event_cam_0/events',
              # 'frame_time_file': LaunchConfig('frame_time_file').perform(context),
              # 'frame_time_file': 'data/2023-05-12/calib_0/2023-05-12_calib_0_triggers.txt',
              # 'frame_time_file': 'data/2023-09-07/wand_calib_2/triggers.txt',
              # 'frame_time_file': 'data/2023-09-07/wand_calib_0/triggers.txt',
              'publishing_frequency': 25.0,
+             'debug_frames': True,
              'visualization_choice': 2}],
         remappings=[
             ('~/events', event_topic),
