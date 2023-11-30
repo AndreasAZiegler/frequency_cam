@@ -107,17 +107,6 @@ public:
   void eventExtTrigger(uint64_t /*sensor_time*/, uint8_t /*edge*/, uint8_t /*id*/) override
   {
     /*
-    // If the first time stamp is > 15s, there is an offset which we subtract every time.
-    if (!initialize_time_stamps_) {
-      initialize_time_stamps_ = true;
-      if (sensor_time > 15000000000) {
-        fix_time_stamps_ = true;
-      }
-    }
-    if (fix_time_stamps_) {
-      sensor_time -= 16777215000;
-    }
-    // std::cout << "Trigger: time stamp: " << sensor_time << std::endl;
     if (!eventExtTriggerInitialized_) {
       lasteExternalEdge_ = edge;
       eventExtTriggerInitialized_ = true;
@@ -302,10 +291,6 @@ private:
 
     std::vector<Point> frequency_points;
 
-    // const int min_range_1 = 2800;
-    // const int max_range_1 = 3200;
-    // const int min_range_2 = 3800;
-    // const int max_range_2 = 4200;
     const int min_range = 490;
     const int max_range = 510;
     cv::Mat rawImg(height_, width_, CV_32FC1, 0.0);
