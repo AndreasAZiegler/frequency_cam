@@ -41,6 +41,7 @@ def launch_setup(context, *args, **kwargs):
              'min_frequency': 490.0,
              'max_frequency': 510.0,
              'cutoff_period': 5.0,  # prefilter cutoff period #events
+             'num_timeout_cycles': 1,
              'debug_x': 240,
              'debug_y': 194,
              'use_log_frequency': False,
