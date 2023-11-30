@@ -46,6 +46,8 @@ ament_auto_find_build_dependencies(REQUIRED ${ROS2_DEPENDENCIES})
 ament_auto_add_library(frequency_cam SHARED
   src/frequency_cam.cpp src/image_maker.cpp src/frequency_cam_ros2.cpp)
 
+target_link_libraries(frequency_cam opencv_features2d)
+
 rclcpp_components_register_nodes(frequency_cam "frequency_cam::FrequencyCamROS")
 
 ament_auto_add_executable(frequency_cam_node src/frequency_cam_node_ros2.cpp)
