@@ -159,7 +159,7 @@ void FrequencyCam::detectHouchCircles(cv::Mat& raw_img, const cv::Mat& gray, con
 
     hough_circle_position_csv_file_ << trigger_timestamp;
     for (const auto& circle : circles_points) {
-      hough_circle_position_csv_file_ << ";" << cvRound(circle.x) << ";" << cvRound(circle.y);
+      hough_circle_position_csv_file_ << ";" << circle.x << ";" << circle.y;
 
       if (1 == visualizationChoice_) {
         cv::Point center(cvRound(circle.x), cvRound(circle.y));
@@ -208,7 +208,7 @@ void FrequencyCam::detectBlobs(cv::Mat& raw_img, const cv::Mat& gray, const uint
     blob_detection_position_csv_file_ << trigger_timestamp;
     // cv::drawKeypoints(raw_img, keypoints, raw_img, cv::Scalar(800, 800, 800), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     for (const auto& circle : circles_points) {
-      blob_detection_position_csv_file_ << ";" << cvRound(circle.x) << ";" << cvRound(circle.y);
+      blob_detection_position_csv_file_ << ";" << circle.x << ";" << circle.y;
       if (2 == visualizationChoice_) {
         cv::circle(raw_img, {cvRound(circle.x), cvRound(circle.y)}, 3, debug_position_color, 1);
       }

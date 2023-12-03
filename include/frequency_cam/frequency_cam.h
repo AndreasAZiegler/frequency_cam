@@ -163,10 +163,10 @@ private:
 
   struct Point
   {
-    explicit Point(int xi = 0, int yi = 0)
+    explicit Point(const double xi = 0, const double yi = 0)
     : x(xi), y(yi) {}
-    int x;
-    int y;
+    double x;
+    double y;
   };
 
   // define the per-pixel filter state
@@ -376,6 +376,7 @@ private:
     detectBlobs(rawImg, gray, trigger_timestamp);
 
     getMeanPosition(rawImg, frequency_points, trigger_timestamp);
+
 
     cv::putText(rawImg, "time stamp: " + std::to_string(trigger_timestamp), {800, 600}, cv::FONT_HERSHEY_SIMPLEX, 1, 550, 4);
     return (rawImg);
