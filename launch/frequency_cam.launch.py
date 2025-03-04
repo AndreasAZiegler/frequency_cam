@@ -16,10 +16,10 @@
 #
 
 import launch
-from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration as LaunchConfig
 from launch.actions import DeclareLaunchArgument as LaunchArg
 from launch.actions import OpaqueFunction
+from launch.substitutions import LaunchConfiguration as LaunchConfig
+from launch_ros.actions import Node
 
 
 def launch_setup(context, *args, **kwargs):
@@ -72,16 +72,25 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     """Create slicer node by calling opaque function."""
-    return launch.LaunchDescription([
-        LaunchArg('image_topic', default_value=['/event_camera/image'],
-                  description='image topic'),
-        LaunchArg('event_topic', default_value=['/event_camera/events'],
-                  description='event topic'),
-        LaunchArg('frame_time_file', default_value=[''],
-                  description='file with frame times (sensor time in nanosec)'),
-        LaunchArg('bag', default_value=[''],
-                  description='name of bag file to read'),
-        LaunchArg('use_sim_time', default_value=['false'],
-                  description='whether to use simulation time'),
-        OpaqueFunction(function=launch_setup)
-        ])
+    return launch.LaunchDescription(
+        [
+            LaunchArg(
+                'image_topic', default_value=['/event_camera/image'], description='image topic'
+            ),
+            LaunchArg(
+                'event_topic', default_value=['/event_camera/events'], description='event topic'
+            ),
+            LaunchArg(
+                'frame_time_file',
+                default_value=[''],
+                description='file with frame times (sensor time in nanosec)',
+            ),
+            LaunchArg('bag', default_value=[''], description='name of bag file to read'),
+            LaunchArg(
+                'use_sim_time',
+                default_value=['false'],
+                description='whether to use simulation time',
+            ),
+            OpaqueFunction(function=launch_setup),
+        ]
+    )

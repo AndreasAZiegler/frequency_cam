@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.5)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
@@ -37,6 +36,10 @@ set(ROS2_DEPENDENCIES
 foreach(pkg ${ROS2_DEPENDENCIES})
   find_package(${pkg} REQUIRED)
 endforeach()
+
+if(${cv_bridge_VERSION} GREATER "3.3.0")
+  add_definitions(-DUSE_CV_BRIDGE_HPP)
+endif()
 
 ament_auto_find_build_dependencies(REQUIRED ${ROS2_DEPENDENCIES})
 
